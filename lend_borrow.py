@@ -1,10 +1,30 @@
 import web3
 import streamlit as st
 from dataclasses import dataclass
+import yfinance as yf
+
+
+
 
 def main():
+
+
     treasury = 100 
+
+
     st.title('ETH Borrow and Lend Application')
+
+    
+    
+    eth_price = yf.download(tickers='ETH-USD',period='1day', interval='1m',rounding=True).drop(columns=['Adj Close','Open','High','Low','Volume'])
+    eth_price['Percent Change']=eth_price['Close'].pct_change()
+
+
+    # liquidate signal
+    if (eth_price['Percent Change'][-1]) * 100 >= 5:
+        st.write('Liquidate Risk High')
+    elif (eth_price['Percent Change'][-1]) * 100 <= 5:
+        st.write('Liquidate Risk Low')
 
     # Lender Section
     st.header('Lender')
