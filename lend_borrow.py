@@ -2,8 +2,22 @@ import web3
 import streamlit as st
 from dataclasses import dataclass
 import yfinance as yf
+from crypto_wallet import generate_account, get_balance, send_transaction, access_treasury_account
+from web3 import Web3
+import time
 
-treasury = 100 
+
+# creates a Web3 instance of the Ganache network on local machine
+w3 = Web3(Web3.HTTPProvider("HTTP://127.0.0.1:7545"))
+
+# """TREASURY - Redefine  by connecting to Ganache"""
+# for testing: choose a wallet addres that is part of Ganache, copy an paste into TREASURY_ADDRESS
+TREASURY_ADDRESS = "0x5F36AF892d95E477D9ae6E9Cc59aaAAEdeAa8B58"
+# for testing: copy and paste the private key into TREASURY_KEY
+TREASURY_KEY = "0056aa03c6c079604d0d9015f477c9c30cddec1a1b5ff121f3fce78db99fee2d"
+TREASURY_ACCOUNT_OBJECT = access_treasury_account(TREASURY_KEY)
+treasury_balance = float(get_balance(w3=w3, address=TREASURY_ADDRESS))
+st.write(f"Treasury is: {treasury_balance}")
 
 
 st.title('ETH Borrow and Lend Application')
@@ -20,30 +34,89 @@ if (eth_price['Percent Change'][-1]) * 100 >= 5:
 elif (eth_price['Percent Change'][-1]) * 100 <= 5:
     st.write('Liquidate Risk Low')
 
-action = st.selectbox('Select an action', ['Lend', 'Borrow', 'Repay', 'Get Balance'])
+# Loads account credentials
+user_account = generate_account()
+if user_account != None:
+    st.write("Your account credentials have been uploaded.")
+    st.write(f"Your starting wallet balance is: {get_balance(w3=w3, address=user_account.address)} ETH.")
+else:
+    st.write("Please ensure your Mneumonic phrase is saved in a .env in this same directory.")
+    st.write("Then restart this application.")
 
-if action == 'Lend':
+
+action2 = st.selectbox('Select an action', ['','Lend', 'Borrow', 'Repay', 'Get Balance'])
+
+
+
+if action2 == 'Lend':
     lend_amount = st.number_input('Enter the amount you want to lend (in ETH):')
-    lend_interest_rate = st.write(f'{(lend_amount/treasury * .5):.2}% Lending Interest' )
+    if lend_amount != 0:
+        lend_interest_rate = st.write(f'{(lend_amount/treasury_balance * .5):.2}% Lending Interest' )
+    else:
+        lend_interest_rate = 0
+
+    balance = get_balance(w3,user_account.address)
+    st.write('Starting Balance:', balance)    
+
     if st.button('Complete Lend'):
-        treasury = treasury + lend_amount
-        st.write(treasury)
 
-if action == 'Borrow':
+        # sending loan to the TREASURY_ADDRESS
+        send_transaction(w3=w3, account=user_account, to=TREASURY_ADDRESS, amount=lend_amount)
+        balance = get_balance(w3,user_account.address)
+        st.write(f'{lend_amount} has been deducted from your personal wallet.')    
+        st.write(f'We owe you {lend_amount} + {(lend_amount/treasury_balance * .5):.2}% interst.')    
+        st.write('New Balance:', balance)    
+
+        # updates the balance of the TREASURY_ADDRESS
+        st.write(f"Treasury balance now: {float(get_balance(w3=w3, address=TREASURY_ADDRESS))} ETH")
+
+if action2 == 'Borrow':
     borrow_amount = st.number_input('Enter the amount you want to borrow (in ETH):')
-    borrow_interest_rate = st.write(f'{(borrow_amount/treasury * 2):.2}% Borrow Interest' )
+    if borrow_amount != 0:
+        borrow_interest_rate = st.write(f'{(borrow_amount/treasury_balance * 2):.2}% Borrow Interest')
+    else:
+        # Choose and insert default value for borrow_interest_rate
+        borrow_interest_rate = 0
+        
+    balance = get_balance(w3,user_account.address)
+    st.write('Balance:', balance)    
+
     if st.button('Complete Borrow'):
-        treasury = treasury - borrow_amount
-        st.write(treasury)
 
-if action == 'Repay':
-    amount = st.number_input('Enter amount to repay')
-    if st.button('Submit'):
-        result = (amount)
-        st.write('Repay successful. Transaction receipt:', result)
+        # sending loan to the TREASURY_ADDRESS
+        send_transaction(w3=w3, account=TREASURY_ACCOUNT_OBJECT, to=user_account.address, amount=borrow_amount)
+        balance = get_balance(w3,user_account.address)
+        st.write(f'{borrow_amount} has sent to your personal wallet.')    
+        st.write(f'You owe us {borrow_amount} + {(borrow_amount/treasury_balance * 2):.2}% interst.')    
+        st.write('New Balance:', balance)    
 
-if action == 'Get Balance':
-    user_address = st.text_input('Enter user address')
+        # updates the balance of the TREASURY_ADDRESS
+        st.write(f"Treasury balance now: {float(get_balance(w3=w3, address=TREASURY_ADDRESS))} ETH")
+
+
+if action2 == 'Repay':
+    repay_amount = st.number_input('Enter amount to repay')
     if st.button('Submit'):
-        result = (user_address)
-        st.write('Balance:', result)
+
+        send_transaction(w3=w3, account=user_account, to=TREASURY_ADDRESS, amount=repay_amount)
+        balance = get_balance(w3,user_account.address)
+        st.write(f'{repay_amount} has been repayed to the treasury for you debts.')    
+        #  @TODO calculate and track interest_accrued
+        #  @TODO determine a way to make brrow_amount a global varaible, line 120 does not function becauce borrow_amount as defined in line 75 does not carry beyond if statement
+        # st.write(f'You owe us {borrow_amount - repay_amount} + interest accrued.')    
+        st.write('New Balance:', balance)    
+
+        # updates the balance of the TREASURY_ADDRESS
+        st.write(f"Treasury balance now: {float(get_balance(w3=w3, address=TREASURY_ADDRESS))} ETH")
+
+# @TODO make this get balance report what is owed by or to the client
+if action2 == 'Get Balance':
+    user_account = st.text_input('Enter user address')
+    if st.button('Submit'):
+ 
+         """Note: Without a Smart Contract, this would need to reference a database or private ledger to properly function."""
+        # debt_or_credit = get_balance(w3,debt_or_credit_account)
+        # st.write('Balance:', debt_or_credit)
+
+        
+
