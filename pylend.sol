@@ -59,7 +59,7 @@ contract LendBorrow {
     function withdraw (uint256 amount) public{
         require(amount > 0, "Amount must be greater than zero");
         require(lendBalance >= amount, "No Funds to Withdraw");
-
+        require(borrowBalance[msg.sender] <= amount, "All Borrowed Amounts must be Repayed before Withdrawing");
         lendBalance -= amount;
         contractBalance -= amount;
 
