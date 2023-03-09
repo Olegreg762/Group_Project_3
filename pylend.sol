@@ -5,6 +5,8 @@ contract LendBorrow {
     mapping(address => uint256) public borrowBalance;
     uint256 public lendBalance;
     uint256 public contractBalance;
+    // time variable used for interest calculations
+    uint256 public time;
 
     //Constructor to allow the contract to be deployed with an ETH balance
     constructor() public payable{
@@ -22,6 +24,9 @@ contract LendBorrow {
         require(msg.value > 0, "Amount must be greater than zero");
 
         contractBalance += msg.value;
+
+        // initializes time to 0 at contract start
+        time = 0;
     }
 
     //Lend function allows the user to lend ETH to function
@@ -64,6 +69,11 @@ contract LendBorrow {
         contractBalance -= amount;
 
         emit Withdraw(msg.sender, amount);
+    }
+
+    function advanceTime() public {
+        // increments time by one day
+        time += 1;
     }
 
 }
