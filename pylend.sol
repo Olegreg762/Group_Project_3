@@ -1,7 +1,11 @@
 pragma solidity 0.5.0;
+//Imports SafeMath to guard against inter overflow
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5.0/contracts/math/SafeMath.sol";
 
 //Create LendBorrow contract
 contract LendBorrow {
+    //Initiates SafeMath in the contract
+    using SafeMath for uint256;
     mapping(address => uint256) public borrowBalance;
     uint256 public lendBalance;
     uint256 public contractBalance;
@@ -42,6 +46,8 @@ contract LendBorrow {
     function borrow(uint256 amount) public {
         require(amount > 0, "Amount must be greater than zero");
         require(lendBalance >= amount, "Borrow Amount must be less than Amount Lended");
+        //Limits Borrow amount to 80% of the amount lended
+        require(borrowBalance[msg.sender].add(amount) <= lendBalance.mul(8).div(10), "Borrow Amount exceeds 80% of Lend Amount");
 
         borrowBalance[msg.sender] += amount;
         contractBalance -= amount;
