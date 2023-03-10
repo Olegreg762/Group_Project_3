@@ -43,22 +43,22 @@ else:
     st.write("Please ensure your Mneumonic phrase is saved in a .env in this same directory.")
     st.write("Then restart this application.")
 
+# Create the Tabs for streamlit
+lend_tab,borrow_tab,repay_tab, balance_tab = st.tabs(['Lend', 'Borrow', 'Repay', 'Get Balance'])
 
-action2 = st.selectbox('Select an action', ['','Lend', 'Borrow', 'Repay', 'Get Balance'])
-
-
-
-if action2 == 'Lend':
+# Creates Lend Tab
+with lend_tab:
+    st.header('Lend')
+    balance = get_balance(w3,user_account.address)
+    st.write('Starting Balance:', balance)    
     lend_amount = st.number_input('Enter the amount you want to lend (in ETH):')
     if lend_amount != 0:
         lend_interest_rate = st.write(f'{(lend_amount/treasury_balance * .5):.2}% Lending Interest' )
     else:
         lend_interest_rate = 0
 
-    balance = get_balance(w3,user_account.address)
-    st.write('Starting Balance:', balance)    
-
-    if st.button('Complete Lend'):
+    
+    if st.button('Complete Lend',key='lend'):
 
         # sending loan to the TREASURY_ADDRESS
         send_transaction(w3=w3, account=user_account, to=TREASURY_ADDRESS, amount=lend_amount)
@@ -70,7 +70,11 @@ if action2 == 'Lend':
         # updates the balance of the TREASURY_ADDRESS
         st.write(f"Treasury balance now: {float(get_balance(w3=w3, address=TREASURY_ADDRESS))} ETH")
 
-if action2 == 'Borrow':
+# Creates Borrow Tab
+with borrow_tab:
+    st.header('Borrow')
+    balance = get_balance(w3,user_account.address)
+    st.write('Balance:', balance)
     borrow_amount = st.number_input('Enter the amount you want to borrow (in ETH):')
     if borrow_amount != 0:
         borrow_interest_rate = st.write(f'{(borrow_amount/treasury_balance * 2):.2}% Borrow Interest')
@@ -78,10 +82,8 @@ if action2 == 'Borrow':
         # Choose and insert default value for borrow_interest_rate
         borrow_interest_rate = 0
         
-    balance = get_balance(w3,user_account.address)
-    st.write('Balance:', balance)    
 
-    if st.button('Complete Borrow'):
+    if st.button('Complete Borrow',key='borrow'):
 
         # sending loan to the TREASURY_ADDRESS
         send_transaction(w3=w3, account=TREASURY_ACCOUNT_OBJECT, to=user_account.address, amount=borrow_amount)
@@ -93,13 +95,16 @@ if action2 == 'Borrow':
         # updates the balance of the TREASURY_ADDRESS
         st.write(f"Treasury balance now: {float(get_balance(w3=w3, address=TREASURY_ADDRESS))} ETH")
 
-
-if action2 == 'Repay':
+# Creates Borrow Tab
+with repay_tab:
+    st.header('Repay')
+    balance = get_balance(w3,user_account.address)
+    st.write('Amount Owed', balance)
     repay_amount = st.number_input('Enter amount to repay')
-    if st.button('Submit'):
+    if st.button('Submit',key='repay'):
 
         send_transaction(w3=w3, account=user_account, to=TREASURY_ADDRESS, amount=repay_amount)
-        balance = get_balance(w3,user_account.address)
+        
         st.write(f'{repay_amount} has been repayed to the treasury for you debts.')    
         #  @TODO calculate and track interest_accrued
         #  @TODO determine a way to make brrow_amount a global varaible, line 120 does not function becauce borrow_amount as defined in line 75 does not carry beyond if statement
@@ -109,10 +114,11 @@ if action2 == 'Repay':
         # updates the balance of the TREASURY_ADDRESS
         st.write(f"Treasury balance now: {float(get_balance(w3=w3, address=TREASURY_ADDRESS))} ETH")
 
-# @TODO make this get balance report what is owed by or to the client
-if action2 == 'Get Balance':
-    user_account = st.text_input('Enter user address')
-    if st.button('Submit'):
+#Creates Balance tab
+with balance_tab:
+    st.header('Get Balance')
+    balance = get_balance(w3,user_account.address)
+    if st.write('Balance', balance):
  
          """Note: Without a Smart Contract, this would need to reference a database or private ledger to properly function."""
         # debt_or_credit = get_balance(w3,debt_or_credit_account)
