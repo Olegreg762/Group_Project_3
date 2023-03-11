@@ -4,6 +4,12 @@ import yfinance as yf
 from crypto_wallet import generate_account, get_balance, send_transaction, access_treasury_account
 from web3 import Web3
 import time
+from dotenv import load_dotenv
+from pathlib import Path
+import os
+import json
+
+load_dotenv()
 
 # creates a Web3 instance of the Ganache network on local machine
 w3 = Web3(Web3.HTTPProvider("HTTP://127.0.0.1:7545"))
@@ -16,8 +22,8 @@ TREASURY_KEY = "0056aa03c6c079604d0d9015f477c9c30cddec1a1b5ff121f3fce78db99fee2d
 TREASURY_ACCOUNT_OBJECT = access_treasury_account(TREASURY_KEY)
 treasury_balance = float(get_balance(w3=w3, address=TREASURY_ADDRESS))
 
-
-st.title(':green[---------------]:blue[$PyBo$]:green[Lend]:blue[----------------]')
+st.set_page_config(layout='wide')
+st.title(':green[---------------------------------------]:blue[$PyBo$]:green[Lend]:blue[---------------------------------------]')
 
 
 eth_price = yf.download(tickers='ETH-USD',period='1day', interval='1m',rounding=True).drop(columns=['Adj Close','Open','High','Low','Volume'])
@@ -27,14 +33,17 @@ percent_change=eth_price['Percent Change'].mean()*100
 col1, col2, col3 = st.columns([1,4.75,1])
 
 with col1:
-    st.write(f"Treasury is: {treasury_balance}")
+    st.header("Treasury Balance")
+    st.write(f'{treasury_balance} ETH')
     # liquidate signal
     if percent_change >= 1:
         #st.write(f'Average Price Change :red[{percent_change:.3f}]%')
-        st.write('Liquidate Risk :red[High]')
+        st.header("Liquidate Risk")
+        st.write(':red[High]')
     elif percent_change <= 1:
         #st.write(f'Average Price Change :green[{percent_change:.3f}]%')
-        st.write('Liquidate Risk :green[Low]')
+        st.header("Liquidate Risk")
+        st.write(":green[Low]")
 
 
 
@@ -42,11 +51,32 @@ with col3:
 # Loads account credentials
     user_account = generate_account()
     if user_account != None:
-        st.write("Your account is :green[Connected].")
-        st.write(f"Your balance is: {get_balance(w3=w3, address=user_account.address)}ETH.")
+        st.header("Account Status")
+        st.write(":green[Connected]")
+        st.header("Account Balance")
+        st.write(f"{get_balance(w3=w3, address=user_account.address)} ETH")
     else:
         st.write("Please ensure your Mneumonic phrase is saved in a .env in this same directory.")
         st.write("Then restart this application.")
+
+ #Smart Contract connection
+@st.cache(allow_output_mutation=True)
+def load_contract():
+    with open (Path('pylend_abi.json')) as f:
+        pylend_abi = json.load(f)
+    
+    #contract_address=os.getenv("")
+    contract_address = os.getenv('SMART_CONTRACT_ADDRESS')
+
+    contract = w3.eth.contract(
+        address=contract_address,
+        abi=pylend_abi
+    )
+
+    return contract
+
+contract = load_contract()
+
 
 with col2:
     
