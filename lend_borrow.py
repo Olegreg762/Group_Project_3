@@ -1,13 +1,17 @@
 import streamlit as st
 from dataclasses import dataclass
 import yfinance as yf
-from crypto_wallet import generate_account, get_balance, send_transaction, access_treasury_account
+#from crypto_wallet import generate_account, get_balance, send_transaction, access_treasury_account
 from web3 import Web3
 import time
 from dotenv import load_dotenv
 from pathlib import Path
 import os
 import json
+
+######################################################
+###### Define Variables and Load Smart Contract ######
+######################################################
 
 load_dotenv()
 
@@ -33,6 +37,7 @@ def load_contract():
     )
 
     return contract
+
 # Initaliize contract
 contract = load_contract()
 
@@ -48,6 +53,15 @@ treasury_address = os.getenv('SMART_CONTRACT_ADDRESS')
 # Load contract(treasury) balance
 treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
 
+# Define User Borrow Balance
+borrow_balance = contract.functions.borrowBalance(user_account).call()
+
+# Define User Lend Balance
+lend_balance = contract.functions.lendBalance().call()
+
+######################################################
+######################################################
+######################################################
 
 st.title(':green[------------------------------------]:blue[$PyBo$]:green[Lend]:blue[------------------------------------]')
 
@@ -94,7 +108,7 @@ with functions_col:
     st.subheader('The :violet[Premier] ETH Lending and Borrowing Application')
 
     # Create the Tabs for streamlit
-    lend_tab,borrow_tab,repay_tab, balance_tab = st.tabs(['Lend', 'Borrow', 'Repay', 'Get Balance'])
+    lend_tab,borrow_tab,repay_tab, balances_tab = st.tabs(['Lend', 'Borrow', 'Repay', 'Balances'])
 
     # Creates Lend Tab
     with lend_tab:
@@ -148,31 +162,28 @@ with functions_col:
     # Creates Borrow Tab
     with repay_tab:
         st.header('Repay')
-        balance = user_balance
-        st.write('Amount Owed', balance)
+        st.write(f'Amount Owed: {borrow_balance/10**18} ETH')
         repay_amount = st.number_input('Enter amount to repay')
         if st.button('Submit',key='repay'):
 
-            send_transaction(w3=w3, account=user_account, to=TREASURY_ADDRESS, amount=repay_amount)
+            # Converts repay amount into int and given wei value
+            repay_amount_wei = Web3.toWei(repay_amount*10**18, 'wei')
+            # Sends the repay transaction to the contract
+            repay_func = contract.functions.repay(repay_amount_wei).transact()
             
             st.write(f'{repay_amount} has been repayed to the treasury for you debts.')    
-            #  @TODO calculate and track interest_accrued
-            #  @TODO determine a way to make brrow_amount a global varaible, line 120 does not function becauce borrow_amount as defined in line 75 does not carry beyond if statement
-            # st.write(f'You owe us {borrow_amount - repay_amount} + interest accrued.')    
-            st.write('New Balance:', balance)    
+            #  @TODO calculate and track interest_accrued    
+            st.write('New Borrow Balance:', borrow_balance)
 
-            # updates the balance of the TREASURY_ADDRESS
-            st.write(f'Treasury balance now: {float(get_balance(w3=w3, address=TREASURY_ADDRESS))} ETH')
+    #Creates Balances tab
+    with balances_tab:
+        st.header('Balances')
+        if st.button('Get Balances'):
+            balance = user_balance
+            st.write(f' Account Balance: {balance} ETH')
+            st.write(f'Borrow Balance: {borrow_balance/10**18} ETH')
+            st.write(f'Lend Balance: {lend_balance/10**18} ETH')
 
-    #Creates Balance tab
-    with balance_tab:
-        st.header('Get Balance')
-        balance = user_balance
-        if st.write('Balance', balance):
-
-            '''Note: Without a Smart Contract, this would need to reference a database or private ledger to properly function.'''
-            # debt_or_credit = get_balance(w3,debt_or_credit_account)
-            # st.write('Balance:', debt_or_credit)
 
         
 
