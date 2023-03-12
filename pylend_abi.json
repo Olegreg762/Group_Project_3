@@ -42,12 +42,7 @@
 	},
 	{
 		"constant": false,
-		"inputs": [
-			{
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
+		"inputs": [],
 		"name": "repay",
 		"outputs": [],
 		"payable": true,

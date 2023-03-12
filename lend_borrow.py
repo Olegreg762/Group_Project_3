@@ -169,11 +169,11 @@ with functions_col:
             # Converts repay amount into int and given wei value
             repay_amount_wei = Web3.toWei(repay_amount*10**18, 'wei')
             # Sends the repay transaction to the contract
-            repay_func = contract.functions.repay(repay_amount_wei).transact()
-            
+            repay_func = contract.functions.repay().transact({'value': repay_amount_wei, 'from': w3.eth.accounts[0]})
+            new_borrow_balance = contract.functions.borrowBalance(user_account).call()
             st.write(f'{repay_amount} has been repayed to the treasury for you debts.')    
             #  @TODO calculate and track interest_accrued    
-            st.write('New Borrow Balance:', borrow_balance)
+            st.write(f'New Borrow Balance: {new_borrow_balance*10**18} ETH')
 
     #Creates Balances tab
     with balances_tab:
