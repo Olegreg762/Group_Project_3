@@ -108,7 +108,7 @@ with functions_col:
     st.subheader('The :violet[Premier] ETH Lending and Borrowing Application')
 
     # Create the Tabs for streamlit
-    lend_tab,borrow_tab,repay_tab, balances_tab = st.tabs(['Lend', 'Borrow', 'Repay', 'Balances'])
+    lend_tab,borrow_tab,repay_tab,withdraw_tab,balances_tab = st.tabs(['Lend', 'Borrow', 'Repay', 'Withdraw', 'Balances'])
 
     # Creates Lend Tab
     with lend_tab:
@@ -166,14 +166,26 @@ with functions_col:
         repay_amount = st.number_input('Enter amount to repay')
         if st.button('Submit',key='repay'):
 
+            repay_amnt = 1
             # Converts repay amount into int and given wei value
-            repay_amount_wei = Web3.toWei(repay_amount*10**18, 'wei')
-            # Sends the repay transaction to the contract
-            repay_func = contract.functions.repay().transact({'value': repay_amount_wei, 'from': w3.eth.accounts[0]})
+            repay_amount_wei = Web3.toWei(repay_amnt*10**18, 'wei')
+            repay = contract.functions.repay(repay_amount_wei).transact({'value': repay_amount_wei, 'from': w3.eth.accounts[0]})
             new_borrow_balance = contract.functions.borrowBalance(user_account).call()
             st.write(f'{repay_amount} has been repayed to the treasury for you debts.')    
             #  @TODO calculate and track interest_accrued    
-            st.write(f'New Borrow Balance: {new_borrow_balance*10**18} ETH')
+            st.write(f'New Borrow Balance: {new_borrow_balance/10**18} ETH')
+    
+    with withdraw_tab:
+        st.header('Withdraw')
+        st.write(f'All Borrows must be paid before withdraw. Current Borrow Balance: {contract.functions.borrowBalance(user_account).call()/10**18} ETH')
+        
+        withdraw_amount = st.number_input('Amount to Withdraw')
+        if st.button('Submit'):
+            withdraw_amount_wei = Web3.toWei(withdraw_amount*10**18, 'wei')
+
+            withdraw = contract.functions.withdraw(withdraw_amount_wei).transact({'from': w3.eth.accounts[0]})
+
+            st.write(withdraw_balance = contract.functions.borrowBalance(user_account).call())
 
     #Creates Balances tab
     with balances_tab:
