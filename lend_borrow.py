@@ -16,10 +16,6 @@ from notification_manager import send_notification
 ###### Define Variables and Load Smart Contract ######
 ######################################################
 
-######################################################
-###### Define Variables and Load Smart Contract ######
-######################################################
-
 load_dotenv()
 
 # twilio_number = os.getenv("VIRTUAL_TWILIO_NUMBER")
@@ -94,6 +90,44 @@ over_borrow = False
 
 ######################################################
 ######################################################
+############ Solidity Contract Functions #############
+
+def solidity_function(func, amount=None):
+    if func =='lend':
+        lend_amount = amount
+        lend_amount_wei = Web3.toWei(lend_amount*10**18, 'wei')
+        lend = contract.functions.lend().transact({'value': lend_amount_wei,'from': w3.eth.accounts[0]})
+        lend_balance = contract.functions.lendBalance().call()
+        return lend_balance
+    elif func =='borrow':
+        borrow_amount = amount
+        borrow_amount_wei = Web3.toWei(borrow_amount*10**18, 'wei')
+        borrow = contract.functions.borrow(borrow_amount_wei).transact({'from': w3.eth.accounts[0]})
+        borrow_balance = contract.functions.borrowBalance(user_account).call()
+        return borrow_balance
+    elif func =='repay':
+        repay_amount = amount
+        repay_amount_wei = Web3.toWei(repay_amount*10**18, 'wei')
+        repay = contract.functions.repay(repay_amount_wei).transact({'value': repay_amount_wei, 'from': w3.eth.accounts[0]})
+        new_borrow_balance = contract.functions.borrowBalance(user_account).call()
+        return new_borrow_balance
+    elif func == 'withdraw':
+        withdraw_amount = amount
+        withdraw_amount_wei = Web3.toWei(withdraw_amount*10**18, 'wei')
+        withdraw = contract.functions.withdraw(withdraw_amount_wei).transact({'from': w3.eth.accounts[0]})
+        withdraw_balance = contract.functions.borrowBalance(user_account).call()
+        return withdraw_balance
+    elif func == 'user_balance':
+        return w3.eth.get_balance(w3.eth.accounts[0])/10**18
+    elif func == 'borrow_balance':
+        return contract.functions.borrowBalance(w3.eth.accounts[0]).call()/10**18
+    elif func == 'lend_balance':
+        return contract.functions.lendBalance().call()/10**18
+    elif func == 'treasury_balance':
+        return w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
+    
+######################################################    
+######################################################
 ######################################################
 
 st.title(':green[------------------------------------]:blue[$PyBo$]:green[Lend]:blue[------------------------------------]')
@@ -109,7 +143,7 @@ treasury_col, functions_col, account_col = st.columns([1,4.75,1])
 # Column that displays treasury data
 with treasury_col:
     st.header('Treasury Balance') 
-    st.write(f'{treasury_balance} ETH')
+    st.write(solidity_function('treasury_balance'), 'ETH')
     # liquidate signal
     if percent_change >= 1:
         #st.write(f'Average Price Change :red[{percent_change:.3f}]%')
@@ -128,7 +162,7 @@ with account_col:
         st.header('Account Status')
         st.write(':green[Connected]')
         st.header('Account Balance')
-        st.write(f'{user_balance} ETH')
+        st.write(solidity_function('user_balance'), 'ETH')
     else:
         st.write('Please ensure your Mneumonic phrase is saved in a .env in this same directory.')
         st.write('Then restart this application.')
@@ -144,8 +178,7 @@ with functions_col:
     # Creates Lend Tab
     with lend_tab:
         st.header('Lend')
-        balance = user_balance
-        st.write('Starting Balance:', f'{balance} ETH')    
+        st.write('Starting Balance:', solidity_function('user_balance'), 'ETH')    
         lend_amount = st.number_input('Enter the amount you want to lend (in ETH):')
         if lend_amount != 0:
             lend_interest_rate = st.write(f'{(lend_amount/treasury_balance * .5):.2}% Lending Interest' )
@@ -201,39 +234,31 @@ with functions_col:
     # Creates Repay Tab
     with repay_tab:
         st.header('Repay')
-        st.write(f'Amount Owed: {borrow_balance/10**18} ETH')
+        st.write(f'Amount Owed:', solidity_function('borrow_balance'),'ETH')
         repay_amount = st.number_input('Enter amount to repay')
         if st.button('Submit',key='repay'):
-
-            repay_amnt = 1
-            # Converts repay amount into int and given wei value
-            repay_amount_wei = Web3.toWei(repay_amnt*10**18, 'wei')
-            repay = contract.functions.repay(repay_amount_wei).transact({'value': repay_amount_wei, 'from': w3.eth.accounts[0]})
-            new_borrow_balance = contract.functions.borrowBalance(user_account).call()
+            solidity_function('repay', repay_amount)
             st.write(f'{repay_amount} has been repayed to the treasury for you debts.')    
             #  @TODO calculate and track interest_accrued    
-            st.write(f'New Borrow Balance: {new_borrow_balance/10**18} ETH')
+            st.write(f'New Borrow Balance:', solidity_function('borrow_balance'), 'ETH')
     
     with withdraw_tab:
         st.header('Withdraw')
-        st.write(f'All Borrows must be paid before withdraw. Current Borrow Balance: {contract.functions.borrowBalance(user_account).call()/10**18} ETH')
+        st.write(f'All Borrows must be paid before withdraw. Current Borrow Balance:', solidity_function('borrow_balance'),'ETH')
         
         withdraw_amount = st.number_input('Amount to Withdraw')
         if st.button('Submit'):
-            withdraw_amount_wei = Web3.toWei(withdraw_amount*10**18, 'wei')
-
-            withdraw = contract.functions.withdraw(withdraw_amount_wei).transact({'from': w3.eth.accounts[0]})
-
-            st.write(withdraw_balance = contract.functions.borrowBalance(user_account).call())
+            solidity_function('withdraw', withdraw_amount)
+            st.write('New Borrow Balance:', solidity_function('borrow_balance'),'ETH')
 
     #Creates Balances tab
     with balances_tab:
         st.header('Balances')
         if st.button('Get Balances'):
             balance = user_balance
-            st.write(f' Account Balance: {balance} ETH')
-            st.write(f'Borrow Balance: {borrow_balance/10**18} ETH')
-            st.write(f'Lend Balance: {lend_balance/10**18} ETH')
+            st.write(f' Account Balance:', solidity_function('user_balance'), 'ETH')
+            st.write(f'Borrow Balance:', solidity_function('borrow_balance'), 'ETH')
+            st.write(f'Lend Balance:', solidity_function('lend_balance'), 'ETH')
 
 
 
