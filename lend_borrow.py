@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from pathlib import Path
 import os
 import json
+import pandas as pd
+import Interest_rate as it_rate
 
 ######################################################
 ###### Define Variables and Load Smart Contract ######
@@ -58,6 +60,27 @@ borrow_balance = contract.functions.borrowBalance(user_account).call()
 
 # Define User Lend Balance
 lend_balance = contract.functions.lendBalance().call()
+
+
+# Define intrest rate variables
+
+# Define default util_rate
+util_rate = .5
+
+# Define optimal util rate
+util_optimal = 0.8
+
+# Define base rate
+base_rate = .01
+
+# Define slope 1, for interest rate calc when util_rate <= util_opt
+slope1 = 0.02
+
+# Define slope 2, for intrest rate calc when util_rate > util_opt
+slope2 = 1.5
+
+# Error Flag if the Util rate is greater than 1
+over_borrow = False
 
 ######################################################
 ######################################################
