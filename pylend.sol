@@ -49,6 +49,7 @@ contract LendBorrow {
         //Limits Borrow amount to 80% of the amount lended
         require(borrowBalance[msg.sender].add(amount) <= lendBalance.mul(8).div(10), "Borrow Amount exceeds 80% of Lend Amount");
 
+        msg.sender.transfer(amount);
         borrowBalance[msg.sender] += amount;
         contractBalance -= amount;
         //Broadcast the Borrow
@@ -58,8 +59,8 @@ contract LendBorrow {
     function repay(uint256 amount) public payable {
         amount = msg.value;
         require(amount > 0, "Amount must be greater than zero");
-        require(msg.value <= amount, "Repay must be less than amount borrrowed");
-        require(borrowBalance[msg.sender] >= amount, "No Borrow Amount to Repay");
+        require(amount <= borrowBalance[msg.sender], "Repay must be less than amount borrrowed");
+        require(borrowBalance[msg.sender] >= 0, "No Borrow Amount to Repay");
 
         borrowBalance[msg.sender] -= amount;
         contractBalance += amount;
@@ -73,6 +74,7 @@ contract LendBorrow {
         require(borrowBalance[msg.sender] <= amount, "All Borrowed Amounts must be Repayed before Withdrawing");
         lendBalance -= amount;
         contractBalance -= amount;
+        msg.sender.transfer(amount);
 
         emit Withdraw(msg.sender, amount);
     }

@@ -8,6 +8,12 @@ from dotenv import load_dotenv
 from pathlib import Path
 import os
 import json
+import pandas as pd
+import Interest_rate as it_rate
+
+######################################################
+###### Define Variables and Load Smart Contract ######
+######################################################
 
 ######################################################
 ###### Define Variables and Load Smart Contract ######
@@ -19,6 +25,7 @@ load_dotenv()
 w3 = Web3(Web3.HTTPProvider('HTTP://127.0.0.1:7545'))
 
 st.set_page_config(layout='wide')
+
 
  #Smart Contract connection
 @st.cache(allow_output_mutation=True)
@@ -58,6 +65,26 @@ borrow_balance = contract.functions.borrowBalance(user_account).call()
 
 # Define User Lend Balance
 lend_balance = contract.functions.lendBalance().call()
+
+# Define intrest rate variables
+
+# Define default util_rate
+util_rate = .5
+
+# Define optimal util rate
+util_optimal = 0.8
+
+# Define base rate
+base_rate = .01
+
+# Define slope 1, for interest rate calc when util_rate <= util_opt
+slope1 = 0.02
+
+# Define slope 2, for intrest rate calc when util_rate > util_opt
+slope2 = 1.5
+
+# Error Flag if the Util rate is greater than 1
+over_borrow = False
 
 ######################################################
 ######################################################
@@ -125,14 +152,18 @@ with functions_col:
             # sending loan to the TREASURY_ADDRESS
             lend_amount_wei = Web3.toWei(lend_amount*10**18, 'wei')
             lend_activity = contract.functions.lend().transact({'value': lend_amount_wei, 'from': w3.eth.accounts[0]})
+
             balance = user_balance
             st.write(f'{lend_amount} has been deducted from your personal wallet.')    
             st.write(f'We owe you {lend_amount} + {(lend_amount/treasury_balance * .5):.2}% interest.')
             st.write('New Balance:', balance)    
 
             # updates the balance of the TREASURY_ADDRESS
+
             updated_treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
             st.write(f'The new treasury balance is: {updated_treasury_balance} ETH')
+
+
 
     # Creates Borrow Tab
     with borrow_tab:
