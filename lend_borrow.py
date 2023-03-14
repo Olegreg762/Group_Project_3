@@ -93,7 +93,7 @@ over_borrow = False
 st.title(':green[------------------------------------]:blue[$PyBo$]:green[Lend]:blue[------------------------------------]')
 
 
-eth_price = yf.download(tickers='ETH-USD',period='1day', interval='1m',rounding=True).drop(columns=['Adj Close','Open','High','Low','Volume'])
+eth_price = yf.download(tickers='ETH-USD',period='1d', interval='5m',rounding=True).drop(columns=['Adj Close','Open','High','Low','Volume'])
 eth_price['Percent Change']=eth_price['Close'].pct_change()
 percent_change=eth_price['Percent Change'].mean()*100
 
@@ -133,7 +133,7 @@ with functions_col:
     st.subheader('The :violet[Premier] ETH Lending and Borrowing Application')
 
     # Create the Tabs for streamlit
-    lend_tab,borrow_tab,repay_tab,withdraw_tab,balances_tab = st.tabs(['Lend', 'Borrow', 'Repay', 'Withdraw', 'Balances'])
+    lend_tab,borrow_tab,repay_tab,withdraw_tab,balances_tab,time_tab = st.tabs(['Lend', 'Borrow', 'Repay', 'Withdraw', 'Balances', 'Time Advance'])
 
     # Creates Lend Tab
     with lend_tab:
@@ -228,5 +228,20 @@ with functions_col:
             st.write(f'Lend Balance: {lend_balance/10**18} ETH')
 
 
-        
+
+    with time_tab:
+        st.header('FOR TESTING ONLY')
+        st.write('This tab to be REMOVED before deployment')
+        st.write('Only used to show how Lend/Borrow interest accrual functions')
+
+        if 'count' not in st.session_state:
+            st.session_state.count = 0
+
+        increment = st.button('Advance Time')
+        if increment:
+            st.session_state.count += 1
+
+        st.write('Interest Time', st.session_state.count)
+
+
 
