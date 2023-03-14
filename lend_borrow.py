@@ -15,12 +15,17 @@ import Interest_rate as it_rate
 ###### Define Variables and Load Smart Contract ######
 ######################################################
 
+######################################################
+###### Define Variables and Load Smart Contract ######
+######################################################
+
 load_dotenv()
 
 # creates a Web3 instance of the Ganache network on local machine
 w3 = Web3(Web3.HTTPProvider('HTTP://127.0.0.1:7545'))
 
 st.set_page_config(layout='wide')
+
 
  #Smart Contract connection
 @st.cache(allow_output_mutation=True)
@@ -60,7 +65,6 @@ borrow_balance = contract.functions.borrowBalance(user_account).call()
 
 # Define User Lend Balance
 lend_balance = contract.functions.lendBalance().call()
-
 
 # Define intrest rate variables
 
@@ -114,7 +118,6 @@ with treasury_col:
 # Column that displays user account balance
 with account_col:
 # Loads account credentials
-    #user_account = generate_account()
     if user_balance != None:
         st.header('Account Status')
         st.write(':green[Connected]')
@@ -123,7 +126,6 @@ with account_col:
     else:
         st.write('Please ensure your Mneumonic phrase is saved in a .env in this same directory.')
         st.write('Then restart this application.')
-
 
 # Column that contains the functions to interact with smart contract
 with functions_col:
@@ -148,14 +150,20 @@ with functions_col:
         if st.button('Complete Lend',key='lend'):
 
             # sending loan to the TREASURY_ADDRESS
-            send_transaction(w3=w3, account=user_account, to=TREASURY_ADDRESS, amount=lend_amount)
+            lend_amount_wei = Web3.toWei(lend_amount*10**18, 'wei')
+            lend_activity = contract.functions.lend().transact({'value': lend_amount_wei, 'from': w3.eth.accounts[0]})
+
             balance = user_balance
             st.write(f'{lend_amount} has been deducted from your personal wallet.')    
-            st.write(f'We owe you {lend_amount} + {(lend_amount/treasury_balance * .5):.2}% interst.')    
+            st.write(f'We owe you {lend_amount} + {(lend_amount/treasury_balance * .5):.2}% interest.')
             st.write('New Balance:', balance)    
 
             # updates the balance of the TREASURY_ADDRESS
-            st.write(f'Treasury balance now: {float(get_balance(w3=w3, address=TREASURY_ADDRESS))} ETH')
+
+            updated_treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
+            st.write(f'The new treasury balance is: {updated_treasury_balance} ETH')
+
+
 
     # Creates Borrow Tab
     with borrow_tab:
@@ -176,13 +184,13 @@ with functions_col:
             send_transaction(w3=w3, account=TREASURY_ACCOUNT_OBJECT, to=user_account.address, amount=borrow_amount)
             balance = user_balance
             st.write(f'{borrow_amount} has sent to your personal wallet.')    
-            st.write(f'You owe us {borrow_amount} + {(borrow_amount/treasury_balance * 2):.2}% interst.')    
+            st.write(f'You owe us {borrow_amount} + {(borrow_amount/treasury_balance * 2):.2}% interest.')    
             st.write('New Balance:', balance)    
 
             # updates the balance of the TREASURY_ADDRESS
             st.write(f'Treasury balance now: {float(get_balance(w3=w3, address=TREASURY_ADDRESS))} ETH')
 
-    # Creates Borrow Tab
+    # Creates Repay Tab
     with repay_tab:
         st.header('Repay')
         st.write(f'Amount Owed: {borrow_balance/10**18} ETH')
