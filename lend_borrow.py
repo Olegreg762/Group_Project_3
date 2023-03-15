@@ -57,9 +57,11 @@ user_account = w3.eth.accounts[0]
 user_balance = w3.eth.get_balance(w3.eth.accounts[0])/10**18
 
 # Load contract(treasury) address
+# treasury_address = os.getenv('SMART_CONTRACT_ADDRESS')
 treasury_address = os.getenv('SMART_CONTRACT_ADDRESS')
 
 # Load contract(treasury) balance
+# treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
 treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
 
 # Define User Borrow Balance
@@ -87,6 +89,10 @@ slope2 = 1.5
 
 # Error Flag if the Util rate is greater than 1
 over_borrow = False
+
+# Lend interest rate
+lend_interest_rate = base_rate+slope1
+borrow_interest_rate = lend_interest_rate*2
 
 ######################################################
 ######################################################
@@ -181,9 +187,10 @@ with functions_col:
         st.write('Starting Balance:', solidity_function('user_balance'), 'ETH')    
         lend_amount = st.number_input('Enter the amount you want to lend (in ETH):')
         if lend_amount != 0:
-            lend_interest_rate = st.write(f'{(lend_amount/treasury_balance * .5):.2}% Lending Interest' )
+            st.write(f'{lend_interest_rate:.2}% Lending Interest' )
+            
         else:
-            lend_interest_rate = 0
+            lend_interest_rate = lend_interest_rate
 
         
         if st.button('Complete Lend',key='lend'):
@@ -194,7 +201,7 @@ with functions_col:
 
             balance = user_balance
             st.write(f'{lend_amount} has been deducted from your personal wallet.')    
-            st.write(f'We owe you {lend_amount} + {(lend_amount/treasury_balance * .5):.2}% interest.')
+            st.write(f'We owe you {lend_amount} + {lend_interest_rate:.2}% interest.')
             st.write('New Balance:', balance)    
 
             # updates the balance of the TREASURY_ADDRESS
@@ -213,10 +220,10 @@ with functions_col:
         st.write('Balance:', balance)
         borrow_amount = st.number_input('Enter the amount you want to borrow (in ETH):')
         if borrow_amount != 0:
-            borrow_interest_rate = st.write(f'{(borrow_amount/treasury_balance * 2):.2}% Borrow Interest')
+            borrow_interest_rate = st.write(f'{borrow_interest_rate:.2}% Borrow Interest')
         else:
             # Choose and insert default value for borrow_interest_rate
-            borrow_interest_rate = 0
+            borrow_interest_rate = borrow_interest_rate
             
 
         if st.button('Complete Borrow',key='borrow'):
@@ -225,7 +232,7 @@ with functions_col:
             send_transaction(w3=w3, account=TREASURY_ACCOUNT_OBJECT, to=user_account.address, amount=borrow_amount)
             balance = user_balance
             st.write(f'{borrow_amount} has sent to your personal wallet.')    
-            st.write(f'You owe us {borrow_amount} + {(borrow_amount/treasury_balance * 2):.2}% interest.')    
+            st.write(f'You owe us {borrow_amount} + {(borrow_interest_rate):.2}% interest.')    
             st.write('New Balance:', balance)    
 
             # updates the balance of the TREASURY_ADDRESS
@@ -272,9 +279,25 @@ with functions_col:
 
         increment = st.button('Advance Time')
         if increment:
+
             st.session_state.count += 1
+            over_borrow, util_rate = it_rate.utilization_rate(treasury_balance,borrow_balance)
+            borrow_interest_rate = it_rate.interest_rate(util_rate, util_optimal, base_rate, slope1, slope2, over_borrow)
+            lend_interest_rate = borrow_amount/2
+
+            ####
+            lend_interest_amount = it_rate.interest_to_pay(lend_interest_rate, borrow_balance, 0)
+            treasury_balance += lend_interest_amount
+            lend_balance += lend_interest_amount
+
+            ###
+            borrow_interest_amount = it_rate.interest_to_pay(borrow_interest_rate, borrow_balance, 0)
+            borrow_balance += borrow_interest_amount
+            
 
         st.write('Interest Time', st.session_state.count)
+        st.write('intrest rate',lend_interest_rate )
+        
 
 
 
