@@ -177,7 +177,10 @@ with functions_col:
 
     # Creates Lend Tab
     with lend_tab:
-        st.header('Lend') 
+
+        st.header('Lend')
+        st.write('Starting Balance:', solidity_function('user_balance'), 'ETH')    
+
         lend_amount = st.number_input('Enter the amount you want to lend (in ETH):')
         if lend_amount != 0:
             lend_interest_rate = st.write(f'{(lend_amount/treasury_balance * .5):.2}% Lending Interest' )
@@ -201,6 +204,11 @@ with functions_col:
             solidity_function('treasury_address')
             #updated_treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
             st.write(f'The new treasury balance is:' , solidity_function('treasury_balance'), 'ETH')
+
+
+            updated_treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
+            st.write(f'The new treasury balance is: {updated_treasury_balance} ETH')
+
 
             # Sends SMS notification - NOTE the line below works, but commenting out until closer to presentation to limit trial uses
             # send_notification(f"Transaction confirmed. You have received your deposit of {lend_amount}ETH. The amount you may borrow has increased by {lend_amount * 0.8}ETH.") 
