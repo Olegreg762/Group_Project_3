@@ -297,7 +297,4 @@ with functions_col:
 
         st.write('Interest Time', st.session_state.count)
         st.write('intrest rate',lend_interest_rate )
-        
-
-
-
+    
