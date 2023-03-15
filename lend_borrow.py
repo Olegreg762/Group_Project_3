@@ -177,8 +177,10 @@ with functions_col:
 
     # Creates Lend Tab
     with lend_tab:
+
         st.header('Lend')
         st.write('Starting Balance:', solidity_function('user_balance'), 'ETH')    
+
         lend_amount = st.number_input('Enter the amount you want to lend (in ETH):')
         if lend_amount != 0:
             lend_interest_rate = st.write(f'{(lend_amount/treasury_balance * .5):.2}% Lending Interest' )
@@ -189,18 +191,24 @@ with functions_col:
         if st.button('Complete Lend',key='lend'):
 
             # sending loan to the TREASURY_ADDRESS
-            lend_amount_wei = Web3.toWei(lend_amount*10**18, 'wei')
-            lend_activity = contract.functions.lend().transact({'value': lend_amount_wei, 'from': w3.eth.accounts[0]})
+            solidity_function('lend', lend_amount)
+            #lend_amount_wei = Web3.toWei(lend_amount*10**18, 'wei')
+            #lend_activity = contract.functions.lend().transact({'value': lend_amount_wei, 'from': w3.eth.accounts[0]})
 
             balance = user_balance
             st.write(f'{lend_amount} has been deducted from your personal wallet.')    
-            st.write(f'We owe you {lend_amount} + {(lend_amount/treasury_balance * .5):.2}% interest.')
-            st.write('New Balance:', balance)    
+            st.write(f'We owe you {lend_amount} + {(lend_amount/treasury_balance * .5):.2}% interest.')   
+            st.write('New Balance:', solidity_function('user_balance'))
 
             # updates the balance of the TREASURY_ADDRESS
+            solidity_function('treasury_address')
+            #updated_treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
+            st.write(f'The new treasury balance is:' , solidity_function('treasury_balance'), 'ETH')
+
 
             updated_treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
             st.write(f'The new treasury balance is: {updated_treasury_balance} ETH')
+
 
             # Sends SMS notification - NOTE the line below works, but commenting out until closer to presentation to limit trial uses
             # send_notification(f"Transaction confirmed. You have received your deposit of {lend_amount}ETH. The amount you may borrow has increased by {lend_amount * 0.8}ETH.") 
@@ -210,7 +218,6 @@ with functions_col:
     with borrow_tab:
         st.header('Borrow')
         balance = user_balance
-        st.write('Balance:', balance)
         borrow_amount = st.number_input('Enter the amount you want to borrow (in ETH):')
         if borrow_amount != 0:
             borrow_interest_rate = st.write(f'{(borrow_amount/treasury_balance * 2):.2}% Borrow Interest')
@@ -222,14 +229,15 @@ with functions_col:
         if st.button('Complete Borrow',key='borrow'):
 
             # sending loan to the TREASURY_ADDRESS
-            send_transaction(w3=w3, account=TREASURY_ACCOUNT_OBJECT, to=user_account.address, amount=borrow_amount)
-            balance = user_balance
-            st.write(f'{borrow_amount} has sent to your personal wallet.')    
+            #send_transaction(w3=w3, account=TREASURY_ACCOUNT_OBJECT, to=user_account.address, amount=borrow_amount)
+            solidity_function('borrow', borrow_amount)
+            #balance = user_balance
+            st.write(f'{borrow_amount} ETH has been sent to your personal wallet.')    
             st.write(f'You owe us {borrow_amount} + {(borrow_amount/treasury_balance * 2):.2}% interest.')    
-            st.write('New Balance:', balance)    
-
+            st.write('New Borrow Balance:', solidity_function('borrow_balance'))    
             # updates the balance of the TREASURY_ADDRESS
-            st.write(f'Treasury balance now: {float(get_balance(w3=w3, address=TREASURY_ADDRESS))} ETH')
+            solidity_function('treasury_address')
+            st.write(f'The new treasury balance is:' , solidity_function('treasury_balance'), 'ETH')
 
     # Creates Repay Tab
     with repay_tab:
