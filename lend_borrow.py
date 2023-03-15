@@ -30,7 +30,7 @@ st.set_page_config(layout='wide')
 
 
  #Smart Contract connection
-@st.cache(allow_output_mutation=True)
+@st.cache_resource
 def load_contract():
     ### UPDATE CONTRACT ABI INFO AFTER DEPLOYMENT ###
     with open (Path('pylend_abi.json')) as f:
@@ -92,37 +92,46 @@ over_borrow = False
 ######################################################
 ############ Solidity Contract Functions #############
 
+# Functio to interact with solidity contract
 def solidity_function(func, amount=None):
+    # Function for lending
     if func =='lend':
         lend_amount = amount
         lend_amount_wei = Web3.toWei(lend_amount*10**18, 'wei')
         lend = contract.functions.lend().transact({'value': lend_amount_wei,'from': w3.eth.accounts[0]})
         lend_balance = contract.functions.lendBalance().call()
         return lend_balance
+    # Function for borrowing
     elif func =='borrow':
         borrow_amount = amount
         borrow_amount_wei = Web3.toWei(borrow_amount*10**18, 'wei')
         borrow = contract.functions.borrow(borrow_amount_wei).transact({'from': w3.eth.accounts[0]})
         borrow_balance = contract.functions.borrowBalance(user_account).call()
         return borrow_balance
+    # Function to repay borrow_balance
     elif func =='repay':
         repay_amount = amount
         repay_amount_wei = Web3.toWei(repay_amount*10**18, 'wei')
         repay = contract.functions.repay(repay_amount_wei).transact({'value': repay_amount_wei, 'from': w3.eth.accounts[0]})
         new_borrow_balance = contract.functions.borrowBalance(user_account).call()
         return new_borrow_balance
+    # Function to withdraw lend_balance
     elif func == 'withdraw':
         withdraw_amount = amount
         withdraw_amount_wei = Web3.toWei(withdraw_amount*10**18, 'wei')
         withdraw = contract.functions.withdraw(withdraw_amount_wei).transact({'from': w3.eth.accounts[0]})
         withdraw_balance = contract.functions.borrowBalance(user_account).call()
         return withdraw_balance
+    # Check user_balance
     elif func == 'user_balance':
         return w3.eth.get_balance(w3.eth.accounts[0])/10**18
+    # Check borrow_balance
     elif func == 'borrow_balance':
         return contract.functions.borrowBalance(w3.eth.accounts[0]).call()/10**18
+    # Check lend_balance
     elif func == 'lend_balance':
         return contract.functions.lendBalance().call()/10**18
+    # Check treasury_balance
     elif func == 'treasury_balance':
         return w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
     
@@ -130,9 +139,10 @@ def solidity_function(func, amount=None):
 ######################################################
 ######################################################
 
-st.title(':green[------------------------------------]:blue[$PyBo$]:green[Lend]:blue[------------------------------------]')
+# Create Title for streamlit app
+st.markdown("<h1 style='text-align: center,;'><FONT COLOR=blue><i>Py</i><FONT COLOR=green>Bo<FONT COLOR=blue>Lend</h1>",unsafe_allow_html=True)
 
-
+# Pulls data using the yfinance API to determine liquidation risk based on price movement.
 eth_price = yf.download(tickers='ETH-USD',period='1d', interval='5m',rounding=True).drop(columns=['Adj Close','Open','High','Low','Volume'])
 eth_price['Percent Change']=eth_price['Close'].pct_change()
 percent_change=eth_price['Percent Change'].mean()*100
