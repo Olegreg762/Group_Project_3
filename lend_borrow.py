@@ -268,19 +268,23 @@ with functions_col:
         if increment:
 
             st.session_state.count += 1
+
+            #calculate utlization rate
             over_borrow, util_rate = it_rate.utilization_rate(treasury_balance,borrow_balance)
+
+            #set borrow interest rate
             borrow_interest_rate = it_rate.interest_rate(util_rate, util_optimal, base_rate, slope1, slope2, over_borrow)
-            lend_interest_rate = borrow_amount/2
 
-            ####
-            lend_interest_amount = it_rate.interest_to_pay(lend_interest_rate, borrow_balance, 0)
-            treasury_balance += lend_interest_amount
-            lend_balance += lend_interest_amount
+            #set lend interest rate
+            lend_interest_rate = borrow_interest_rate/2
 
-            ###
             borrow_interest_amount = it_rate.interest_to_pay(borrow_interest_rate, borrow_balance, 0)
-            borrow_balance += borrow_interest_amount
             
+            solidity_function('borrow',borrow_interest_amount)
+            solidity_function('lend',borrow_interest_amount/2)
+            solidity_function('repay',borrow_interest_amount/2)
+
+
 
         st.write('Interest Time', st.session_state.count)
         st.write('Lend Intrest Rate',lend_interest_rate )
