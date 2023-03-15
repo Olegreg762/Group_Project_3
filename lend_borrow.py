@@ -140,7 +140,7 @@ def solidity_function(func, amount=None):
 ######################################################
 
 # Create Title for streamlit app
-st.markdown("<h1 style='text-align: center,;'><FONT COLOR=blue><i>Py</i><FONT COLOR=green>Bo<FONT COLOR=blue>Lend</h1>",unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'><FONT COLOR=blue><i>Py</i><FONT COLOR=green>Bo<FONT COLOR=blue>Lend</h1>",unsafe_allow_html=True)
 
 # Pulls data using the yfinance API to determine liquidation risk based on price movement.
 eth_price = yf.download(tickers='ETH-USD',period='1d', interval='5m',rounding=True).drop(columns=['Adj Close','Open','High','Low','Volume'])
