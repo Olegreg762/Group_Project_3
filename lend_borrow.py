@@ -50,24 +50,6 @@ def load_contract():
 # Initaliize contract
 contract = load_contract()
 
-# Load user account
-user_account = w3.eth.accounts[0]
-
-# Load user account balance
-user_balance = w3.eth.get_balance(w3.eth.accounts[0])/10**18
-
-# Load contract(treasury) address
-treasury_address = os.getenv('SMART_CONTRACT_ADDRESS')
-
-# Load contract(treasury) balance
-treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
-
-# Define User Borrow Balance
-borrow_balance = contract.functions.borrowBalance(user_account).call()
-
-# Define User Lend Balance
-lend_balance = contract.functions.lendBalance().call()
-
 # Define intrest rate variables
 
 # Define default util_rate
@@ -97,6 +79,7 @@ borrow_interest_rate = base_rate +slope1
 
 # Functio to interact with solidity contract
 def solidity_function(func, amount=None):
+    user_account = w3.eth.accounts[0]
     # Function for lending
     if func =='lend':
         lend_amount = amount
@@ -181,20 +164,14 @@ with functions_col:
 
             # sending loan to the TREASURY_ADDRESS
             solidity_function('lend', lend_amount)
-            #lend_amount_wei = Web3.toWei(lend_amount*10**18, 'wei')
-            #lend_activity = contract.functions.lend().transact({'value': lend_amount_wei, 'from': w3.eth.accounts[0]})
 
-            balance = user_balance
             st.write(f'{lend_amount} has been deducted from your personal wallet.')    
             st.write(f'We owe you {lend_amount} + {lend_interest_rate}% interest.')   
             st.write('New Balance:', solidity_function('user_balance'))
 
             # updates the balance of the TREASURY_ADDRESS
             solidity_function('treasury_address')
-            #updated_treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
             st.write(f'The new treasury balance is:' , solidity_function('treasury_balance'), 'ETH')
-
-
 
             # Sends SMS notification - NOTE the line below works, but commenting out until closer to presentation to limit trial uses
             # send_notification(f"Transaction confirmed. You have received your deposit of {lend_amount}ETH. The amount you may borrow has increased by {lend_amount * 0.8}ETH.") 
@@ -203,7 +180,6 @@ with functions_col:
     # Creates Borrow Tab
     with borrow_tab:
         st.header('Borrow')
-        balance = user_balance
         borrow_amount = st.number_input('Enter the amount you want to borrow (in ETH):')
         if borrow_amount != 0:
             st.write(f'{(borrow_interest_rate):.2}% Borrow Interest')
@@ -215,7 +191,6 @@ with functions_col:
         if st.button('Complete Borrow',key='borrow'):
 
             # sending loan to the TREASURY_ADDRESS
-            #send_transaction(w3=w3, account=TREASURY_ACCOUNT_OBJECT, to=user_account.address, amount=borrow_amount)
             solidity_function('borrow', borrow_amount)
             #balance = user_balance
             st.write(f'{borrow_amount} ETH has been sent to your personal wallet.')    
@@ -249,7 +224,6 @@ with functions_col:
     with balances_tab:
         st.header('Balances')
         if st.button('Get Balances'):
-            balance = user_balance
             st.write(f' Account Balance:', solidity_function('user_balance'), 'ETH')
             st.write(f'Borrow Balance:', solidity_function('borrow_balance'), 'ETH')
             st.write(f'Lend Balance:', solidity_function('lend_balance'), 'ETH')
@@ -268,11 +242,14 @@ with functions_col:
         if increment:
 
             st.session_state.count += 1
+            treasury_balance = solidity_function('treasury_balance')
+            borrow_balance = solidity_function('borrow_balance')
             over_borrow, util_rate = it_rate.utilization_rate(treasury_balance,borrow_balance)
             borrow_interest_rate = it_rate.interest_rate(util_rate, util_optimal, base_rate, slope1, slope2, over_borrow)
             lend_interest_rate = borrow_amount/2
 
             ####
+            lend_balance = solidity_function('lend_balance')
             lend_interest_amount = it_rate.interest_to_pay(lend_interest_rate, borrow_balance, 0)
             treasury_balance += lend_interest_amount
             lend_balance += lend_interest_amount
@@ -303,7 +280,7 @@ with treasury_col:
 # Column that displays user account balance
 with account_col:
 # Loads account credentials
-    if user_balance != None:
+    if solidity_function('user_balance') != None:
         st.header('Account Status')
         st.write(':green[Connected]')
         st.header('Account Balance')
