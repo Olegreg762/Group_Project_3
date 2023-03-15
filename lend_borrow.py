@@ -150,32 +150,9 @@ percent_change=eth_price['Percent Change'].mean()*100
 # Initialize column interface for streamlit
 treasury_col, functions_col, account_col = st.columns([1,4.75,1])
 
-# Column that displays treasury data
-with treasury_col:
-    st.header('Treasury Balance') 
-    st.write(solidity_function('treasury_balance'), 'ETH')
-    # liquidate signal
-    if percent_change >= 1:
-        #st.write(f'Average Price Change :red[{percent_change:.3f}]%')
-        st.header('Liquidate Risk')
-        st.write(':red[High]')
-    elif percent_change <= 1:
-        #st.write(f'Average Price Change :green[{percent_change:.3f}]%')
-        st.header('Liquidate Risk')
-        st.write(':green[Low]')
-
-
-# Column that displays user account balance
-with account_col:
-# Loads account credentials
-    if user_balance != None:
-        st.header('Account Status')
-        st.write(':green[Connected]')
-        st.header('Account Balance')
-        st.write(solidity_function('user_balance'), 'ETH')
-    else:
-        st.write('Please ensure your Mneumonic phrase is saved in a .env in this same directory.')
-        st.write('Then restart this application.')
+##
+## treasury_col and account_col at bottom of file so the balances updates after actions
+##
 
 # Column that contains the functions to interact with smart contract
 with functions_col:
@@ -294,5 +271,28 @@ with functions_col:
 
         st.write('Interest Time', st.session_state.count)
 
+# Column that displays treasury data
+with treasury_col:
+    st.header('Treasury Balance') 
+    st.write(solidity_function('treasury_balance'), 'ETH')
+    # liquidate signal
+    if percent_change >= 1:
+        #st.write(f'Average Price Change :red[{percent_change:.3f}]%')
+        st.header('Liquidate Risk')
+        st.write(':red[High]')
+    elif percent_change <= 1:
+        #st.write(f'Average Price Change :green[{percent_change:.3f}]%')
+        st.header('Liquidate Risk')
+        st.write(':green[Low]')
 
-
+# Column that displays user account balance
+with account_col:
+# Loads account credentials
+    if user_balance != None:
+        st.header('Account Status')
+        st.write(':green[Connected]')
+        st.header('Account Balance')
+        st.write(solidity_function('user_balance'), 'ETH')
+    else:
+        st.write('Please ensure your Mneumonic phrase is saved in a .env in this same directory.')
+        st.write('Then restart this application.')
