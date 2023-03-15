@@ -1,7 +1,6 @@
 import streamlit as st
 from dataclasses import dataclass
 import yfinance as yf
-#from crypto_wallet import generate_account, get_balance, send_transaction, access_treasury_account
 from web3 import Web3
 import time
 from dotenv import load_dotenv
@@ -127,6 +126,7 @@ def solidity_function(func, amount=None):
 
 # Create Title for streamlit app
 st.markdown("<h1 style='text-align: center;'><FONT COLOR=blue><i>Py</i><FONT COLOR=green>Bo<FONT COLOR=blue>Lend</h1>",unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'><FONT COLOR=green>------------------------------<FONT COLOR=blue>------------------------------</h1>",unsafe_allow_html=True)
 
 # Pulls data using the yfinance API to determine liquidation risk based on price movement.
 eth_price = yf.download(tickers='ETH-USD',period='1d', interval='5m',rounding=True).drop(columns=['Adj Close','Open','High','Low','Volume'])
@@ -213,8 +213,9 @@ with functions_col:
     
     with withdraw_tab:
         st.header('Withdraw')
-        st.write(f'All Borrows must be paid before withdraw. Current Borrow Balance:', solidity_function('borrow_balance'),'ETH')
-        
+        st.subheader('All Borrows must be paid before withdraw.')
+        st.write('Current Borrow Balance:', solidity_function('borrow_balance'),'ETH')
+        st.write('Current Lend Balacne:', solidity_function('lend_balance'),'ETH')
         withdraw_amount = st.number_input('Amount to Withdraw')
         if st.button('Submit'):
             solidity_function('withdraw', withdraw_amount)
@@ -245,8 +246,7 @@ with functions_col:
 
 
             #calculate utlization rate
-
-            over_borrow, util_rate = it_rate.utilization_rate(treasury_balance,borrow_balance)
+            over_borrow, util_rate = it_rate.utilization_rate(solidity_function('treasury_balance'),solidity_function('borrow_balance'))
 
             #set borrow interest rate
             borrow_interest_rate = it_rate.interest_rate(util_rate, util_optimal, base_rate, slope1, slope2, over_borrow)
@@ -257,11 +257,12 @@ with functions_col:
 
 
 
-            borrow_interest_amount = it_rate.interest_to_pay(borrow_interest_rate, borrow_balance, 0)
+            borrow_interest_amount = it_rate.interest_to_pay(borrow_interest_rate, solidity_function('borrow_balance'), 0)
             
-            solidity_function('borrow',borrow_interest_amount)
+
             solidity_function('lend',borrow_interest_amount/2)
             solidity_function('repay',borrow_interest_amount/2)
+            solidity_function('borrow',borrow_interest_amount)
 
 
 
