@@ -88,6 +88,9 @@ slope2 = 1.5
 # Error Flag if the Util rate is greater than 1
 over_borrow = False
 
+lend_interest_rate = base_rate + slope1/2
+borrow_interest_rate = base_rate +slope1
+
 ######################################################
 ######################################################
 ############ Solidity Contract Functions #############
@@ -170,9 +173,9 @@ with functions_col:
 
         lend_amount = st.number_input('Enter the amount you want to lend (in ETH):')
         if lend_amount != 0:
-            lend_interest_rate = st.write(f'{(lend_amount/treasury_balance * .5):.2}% Lending Interest' )
+            lend_interest_rate = st.write(f'{lend_interest_rate:.2}% Lending Interest' )
         else:
-            lend_interest_rate = 0
+            lend_interest_rate = lend_interest_rate
 
         
         if st.button('Complete Lend',key='lend'):
@@ -184,7 +187,7 @@ with functions_col:
 
             balance = user_balance
             st.write(f'{lend_amount} has been deducted from your personal wallet.')    
-            st.write(f'We owe you {lend_amount} + {(lend_amount/treasury_balance * .5):.2}% interest.')   
+            st.write(f'We owe you {lend_amount} + {(lend_interest_rate):.2}% interest.')   
             st.write('New Balance:', solidity_function('user_balance'))
 
             # updates the balance of the TREASURY_ADDRESS
@@ -207,10 +210,10 @@ with functions_col:
         balance = user_balance
         borrow_amount = st.number_input('Enter the amount you want to borrow (in ETH):')
         if borrow_amount != 0:
-            borrow_interest_rate = st.write(f'{(borrow_amount/treasury_balance * 2):.2}% Borrow Interest')
+            borrow_interest_rate = st.write(f'{(borrow_interest_rate):.2}% Borrow Interest')
         else:
             # Choose and insert default value for borrow_interest_rate
-            borrow_interest_rate = 0
+            borrow_interest_rate = borrow_interest_rate
             
 
         if st.button('Complete Borrow',key='borrow'):
@@ -220,7 +223,7 @@ with functions_col:
             solidity_function('borrow', borrow_amount)
             #balance = user_balance
             st.write(f'{borrow_amount} ETH has been sent to your personal wallet.')    
-            st.write(f'You owe us {borrow_amount} + {(borrow_amount/treasury_balance * 2):.2}% interest.')    
+            st.write(f'You owe us {borrow_amount} + {(borrow_interest_rate * 2):.2}% interest.')    
             st.write('New Borrow Balance:', solidity_function('borrow_balance'))    
             # updates the balance of the TREASURY_ADDRESS
             solidity_function('treasury_address')
@@ -267,9 +270,25 @@ with functions_col:
 
         increment = st.button('Advance Time')
         if increment:
+
             st.session_state.count += 1
+            over_borrow, util_rate = it_rate.utilization_rate(treasury_balance,borrow_balance)
+            borrow_interest_rate = it_rate.interest_rate(util_rate, util_optimal, base_rate, slope1, slope2, over_borrow)
+            lend_interest_rate = borrow_amount/2
+
+            ####
+            lend_interest_amount = it_rate.interest_to_pay(lend_interest_rate, borrow_balance, 0)
+            treasury_balance += lend_interest_amount
+            lend_balance += lend_interest_amount
+
+            ###
+            borrow_interest_amount = it_rate.interest_to_pay(borrow_interest_rate, borrow_balance, 0)
+            borrow_balance += borrow_interest_amount
+            
 
         st.write('Interest Time', st.session_state.count)
+        st.write('Lend Intrest Rate',lend_interest_rate )
+    
 
 # Column that displays treasury data
 with treasury_col:
