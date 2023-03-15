@@ -168,14 +168,13 @@ with functions_col:
     # Creates Lend Tab
     with lend_tab:
 
-        st.header('Lend')
-        st.write('Starting Balance:', solidity_function('user_balance'), 'ETH')    
+        st.header('Lend')   
 
         lend_amount = st.number_input('Enter the amount you want to lend (in ETH):')
         if lend_amount != 0:
-            lend_interest_rate = st.write(f'{lend_interest_rate:.2}% Lending Interest' )
+            st.write(f'{lend_interest_rate:.2}% Lending Interest' )
         else:
-            lend_interest_rate = lend_interest_rate
+            lend_interest_rate
 
         
         if st.button('Complete Lend',key='lend'):
@@ -187,7 +186,7 @@ with functions_col:
 
             balance = user_balance
             st.write(f'{lend_amount} has been deducted from your personal wallet.')    
-            st.write(f'We owe you {lend_amount} + {(lend_interest_rate):.2}% interest.')   
+            st.write(f'We owe you {lend_amount} + {lend_interest_rate}% interest.')   
             st.write('New Balance:', solidity_function('user_balance'))
 
             # updates the balance of the TREASURY_ADDRESS
@@ -195,9 +194,6 @@ with functions_col:
             #updated_treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
             st.write(f'The new treasury balance is:' , solidity_function('treasury_balance'), 'ETH')
 
-
-            updated_treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
-            st.write(f'The new treasury balance is: {updated_treasury_balance} ETH')
 
 
             # Sends SMS notification - NOTE the line below works, but commenting out until closer to presentation to limit trial uses
@@ -210,10 +206,10 @@ with functions_col:
         balance = user_balance
         borrow_amount = st.number_input('Enter the amount you want to borrow (in ETH):')
         if borrow_amount != 0:
-            borrow_interest_rate = st.write(f'{(borrow_interest_rate):.2}% Borrow Interest')
+            st.write(f'{(borrow_interest_rate):.2}% Borrow Interest')
         else:
             # Choose and insert default value for borrow_interest_rate
-            borrow_interest_rate = borrow_interest_rate
+            borrow_interest_rate
             
 
         if st.button('Complete Borrow',key='borrow'):
