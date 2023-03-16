@@ -1,5 +1,4 @@
 import streamlit as st
-from dataclasses import dataclass
 import yfinance as yf
 from web3 import Web3
 import time
@@ -11,16 +10,11 @@ import pandas as pd
 import Interest_rate as it_rate
 from notification_manager import send_notification
 
+
 ######################################################
-###### Define Variables and Load Smart Contract ######
-######################################################
+################ Load Smart Contract #################
 
 load_dotenv()
-
-# twilio_number = os.getenv("VIRTUAL_TWILIO_NUMBER")
-# user_number = os.getenv("VERIFIED_NUMBER")
-# twilio_sid = os.getenv("TWILIO_SID")
-# twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN")
 
 # creates a Web3 instance of the Ganache network on local machine
 w3 = Web3(Web3.HTTPProvider('HTTP://127.0.0.1:7545'))
@@ -28,7 +22,7 @@ w3 = Web3(Web3.HTTPProvider('HTTP://127.0.0.1:7545'))
 st.set_page_config(layout='wide')
 
 
- #Smart Contract connection
+# Smart Contract connection and store in in Streamlit cache
 @st.cache_resource
 def load_contract():
     ### UPDATE CONTRACT ABI INFO AFTER DEPLOYMENT ###
@@ -49,7 +43,18 @@ def load_contract():
 # Initaliize contract
 contract = load_contract()
 
-# Define intrest rate variables
+
+######################################################
+######### Load and Define Twilio API variables #######
+
+# twilio_number = os.getenv("VIRTUAL_TWILIO_NUMBER")
+# user_number = os.getenv("VERIFIED_NUMBER")
+# twilio_sid = os.getenv("TWILIO_SID")
+# twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+
+
+######################################################
+########## Define intrest rate variables #############
 
 # Define default util_rate
 util_rate = .5
@@ -72,7 +77,6 @@ over_borrow = False
 lend_interest_rate = base_rate + slope1/2
 borrow_interest_rate = base_rate +slope1
 
-######################################################
 ######################################################
 ############ Solidity Contract Functions #############
 
@@ -120,9 +124,8 @@ def solidity_function(func, amount=None):
     elif func == 'treasury_balance':
         return w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
     
-######################################################    
 ######################################################
-######################################################
+############### Main Streamlit Application ###########
 
 # Create Title for streamlit app
 st.markdown("<h1 style='text-align: center;'><FONT COLOR=blue><i>Py</i><FONT COLOR=green>Bo<FONT COLOR=blue>Lend</h1>",unsafe_allow_html=True)
@@ -136,9 +139,9 @@ percent_change=eth_price['Percent Change'].mean()*100
 # Initialize column interface for streamlit
 treasury_col, functions_col, account_col = st.columns([1,4.75,1])
 
-##
+###
 ## treasury_col and account_col at bottom of file so the balances updates after actions
-##
+###
 
 # Column that contains the functions to interact with smart contract
 with functions_col:
