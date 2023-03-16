@@ -7,10 +7,9 @@ from dotenv import load_dotenv
 load_dotenv() 
 
 
-def send_notification(message):
+def send_notification(message, user_number):
     # saves .env variables
     twilio_number = os.getenv("VIRTUAL_TWILIO_NUMBER")
-    user_number = os.getenv("VERIFIED_NUMBER")
     twilio_sid = os.getenv("TWILIO_SID")
     twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN")    
 

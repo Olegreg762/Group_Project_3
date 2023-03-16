@@ -18,11 +18,6 @@ from notification_manager import send_notification
 
 load_dotenv()
 
-# twilio_number = os.getenv("VIRTUAL_TWILIO_NUMBER")
-# user_number = os.getenv("VERIFIED_NUMBER")
-# twilio_sid = os.getenv("TWILIO_SID")
-# twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-
 # creates a Web3 instance of the Ganache network on local machine
 w3 = Web3(Web3.HTTPProvider('HTTP://127.0.0.1:7545'))
 
@@ -30,7 +25,7 @@ st.set_page_config(layout='wide')
 
 
  #Smart Contract connection
-@st.cache_resource
+@st.cache(allow_output_mutation=True)
 def load_contract():
     ### UPDATE CONTRACT ABI INFO AFTER DEPLOYMENT ###
     with open (Path('pylend_abi.json')) as f:
@@ -154,6 +149,9 @@ with functions_col:
         st.header('Lend')   
 
         lend_amount = st.number_input('Enter the amount you want to lend (in ETH):')
+
+        notification_number = st.text_input('Enter your phone number to receive confirmation via text message:')
+
         if lend_amount != 0:
             st.write(f'{lend_interest_rate:.2}% Lending Interest' )
         else:
@@ -174,7 +172,11 @@ with functions_col:
             st.write(f'The new treasury balance is:' , solidity_function('treasury_balance'), 'ETH')
 
             # Sends SMS notification - NOTE the line below works, but commenting out until closer to presentation to limit trial uses
-            # send_notification(f"Transaction confirmed. You have received your deposit of {lend_amount}ETH. The amount you may borrow has increased by {lend_amount * 0.8}ETH.") 
+            if notification_number != None:
+                try:
+                    send_notification(f"Transaction confirmed. You have received your deposit of {lend_amount}ETH. The amount you may borrow has increased by {lend_amount * 0.8}ETH.", f"+1{notification_number}") 
+                except:
+                    st.write("The number you entered may not be valid, but the above information confirms your transaction.")
 
 
     # Creates Borrow Tab
