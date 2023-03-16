@@ -130,7 +130,77 @@ The user is able to withdraw their balance by interact with the contract over st
 
 
 ### Interest Rate Calculation
-Interest functionality is coded in `Interest_rate.py`, imported into `lend_borrow.py`, then then sent over to the `pylend.sol` smart contract.
+Interest functionality is coded in `Interest_rate.py`, imported into `lend_borrow.py`, then then sent over to the `pylend.sol` smart contract. The `Interest_rate.py` files defines three funtioons.
+
+The `utilization_rate()` function takes two parameters, the `contract_balance` and `contract_lend`. Based on these two parameters, it then calculates the utilization rate by amount lent by the contract balance. This figure is then returned for future use. Additionally it returns a boolean value called `over_borrow` that is used in the interest rate calculation.
+
+```python
+def utilization_rate(contract_balance, contract_lend):
+
+    # sets default rate if the function errors out
+    util_rate = .5
+    over_borrow = False
+
+    # tests contract balance and calculates Util rate
+
+    if contract_balance>= 0 and contract_balance>contract_lend:
+        util_rate = contract_lend/contract_balance
+    elif contract_balance >= 0 and contract_balance < contract_lend:
+        over_borrow = True
+    return over_borrow, util_rate
+```
+
+The next function defined in `Interest_rate.py` is actual interest rate calculation. First a default rate is set by multiplying the base rate by `slope1`. Then the function checks to see if the `over_borrow` status is True of False to determine the optimal interest calculation. Af the utilization rate is above or below the optimal level, different interest rates are determined. These dynamic calculations work to incentivize or disincentivize lending and borrowing accordingly.
+
+```python
+def interest_rate(util_rate ,util_optimal, base_rate, slope1, slope2, over_borrow):
+    
+    #sets default rate 
+    i_rate = base_rate + slope1
+    
+    # Test if there is an over-borrow situation
+    if over_borrow == False:
+
+        # if the utilization rate is less than the optimal rate
+        if util_rate<= util_optimal:
+            i_rate = base_rate + slope1*(util_rate/util_optimal)
+
+        # if the utilization rate is greater than the optimal rate    
+        elif util_rate >util_optimal:
+            i_rate = base_rate +slope1 +slope2*((util_rate -util_optimal)/(1-util_optimal))
+    
+    # sets the intrest if the over borrow is high
+    elif over_borrow == True:
+        i_rate = i_rate + slope1 + slope2*100
+
+    return i_rate
+```
+
+The final function then sends the interest calculated to the smart contract so the user can be credited or debited accordingly. 
+
+### Notifications
+PyBoLend allows for users to received confirmation via SMS text message after a successful lending transaction. This functionality is coded in a file called `notification_manager.py`, which uses an API provided by Twilio to send the messages. A function called `send_notification()` is coded below:
+
+```python
+def send_notification(message, user_number):
+    # saves .env variables
+    twilio_number = os.getenv("VIRTUAL_TWILIO_NUMBER")
+    twilio_sid = os.getenv("TWILIO_SID")
+    twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN")    
+
+    # initializes client object
+    client = Client(twilio_sid, twilio_auth_token)
+
+    # creates and send notification message
+    message = client.messages.create(
+        body=message,
+        from_=twilio_number,
+        to=user_number
+    )
+```
+
+This function takes a message and the user provided telephone number as parameters. After the required environment variables are then loaded and saved, the function creates an instance of the `Client()` object, and save it to the `client` variable. And in the last five lines the notification message is constructed and sent.
+
 
 ## Test Cases
 - Lending successful execution
