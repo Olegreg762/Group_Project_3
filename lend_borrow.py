@@ -104,11 +104,13 @@ def solidity_function(func, amount=None):
         withdraw = contract.functions.withdraw(withdraw_amount_wei).transact({'from': w3.eth.accounts[0]})
         withdraw_balance = contract.functions.borrowBalance(user_account).call()
         return withdraw_balance
+    # Function that does that interest transactions
     elif func == 'interest':
+    # Send interest to treasury balance
         interest_amount = amount
         interest_amount_wei = Web3.toWei(interest_amount*10**18, 'wei')
         interest = contract.functions.contractStart().transact({'value': interest_amount_wei,'from': w3.eth.accounts[0]})
-        
+    # Send interest to user lend balance
         lend = contract.functions.lend().transact({'value': interest_amount_wei,'from': w3.eth.accounts[0]})
         lend_balance = contract.functions.lendBalance().call()
         interest_balance = interest_amount
