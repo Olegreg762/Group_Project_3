@@ -18,9 +18,17 @@ The goal of this project is to create a decentralized lending application utiliz
 ![Repo Image](Images/Screenshot1_Landing.png)
 
 ## Features
+The core features of the PyBoLend App include: 
+- Lending
+- Borrowing
+- Repaying
+- Withdrawing
+- Accruing interest
+
+Since this is a decentralized Ethereum application with a python UI, the core functionality spans two key files 1) `pylend.sol` and 2) `lend_borrow.py`. In the following sub-sections, we outline the solidity code first then the python code that governs the given feature functionality.
 
 ### Lending
-Lending functionality is coded across two core files: `pylend.sol`, `lend_borrow.py`. The initial implementation is in the smart contract:
+Lending functionality is coded across two core files: `pylend.sol`, `lend_borrow.py`. The initial implementation is in the smart contract below. After deploying an instance of the contract, a user is able to submit ETH to the contact in the form of a loan, the contractBalance gets updated with the value sent, then the lendBalance is updated, and finally the Lending event is broadcast to the blockchain.
 
 ```solidity
 function lend() public payable{
@@ -31,35 +39,19 @@ function lend() public payable{
     emit Lend(msg.sender, msg.value);
 ```
 
-After deploying an instance of the contract, a user is able to submit ETH to the contact in the form of a loan, the contractBalance gets updated with the value sent, then the lendBalance is updated, and finally the Lending event is broadcast to the blockchain.
-
-The user's interaction with the contract occurs on lend_borrow.py:
-
+The user's interaction with the contract occurs on lend_borrow.py. If the "Complete Lend" button is clicked, the amount input by the user is converted to wei. Then the lend transaction from the solidity contract is saved to the variable `lend`. Then the users credit to the treasury is saved as to the variable `lend_balance` by calling the `lendBalance()` solidity function and this variable is returned.
 
 ```python
-if st.button('Complete Lend',key='lend'):
-
-    # sending loan to the TREASURY_ADDRESS
+    lend_amount = amount
     lend_amount_wei = Web3.toWei(lend_amount*10**18, 'wei')
-    lend_activity = contract.functions.lend().transact({'value': lend_amount_wei, 'from': w3.eth.accounts[0]})
-
-    balance = user_balance
-    st.write(f'{lend_amount} has been deducted from your personal wallet.')    
-    st.write(f'We owe you {lend_amount} + {(lend_amount/treasury_balance * .5):.2}% interest.')
-    st.write('New Balance:', balance)    
-
-    # updates the balance of the TREASURY_ADDRESS
-
-    updated_treasury_balance = w3.eth.get_balance(os.getenv('SMART_CONTRACT_ADDRESS'))/10**18
-    st.write(f'The new treasury balance is: {updated_treasury_balance} ETH')
+    lend = contract.functions.lend().transact({'value': lend_amount_wei,'from': w3.eth.accounts[0]})
+    lend_balance = contract.functions.lendBalance().call()
+    return lend_balance
 ```
-
-If the Lend button is clicked, the amount input by the user is converted to wei. Then the lend transaction from the solidity contract is saved to the variable `lend_activity`. The users balance is updated to the user interface. The last two lines of code, save the new contract balance to a variable, then display that balance to the UI.
-
 
 
 ### Borrowing
-Borrowing functionality is coded across two core files: `pylend.sol`, `lend_borrow.py`. The initial implementation is in the smart contract:
+The initial implementation of borrowing is in the smart contract on the `pylend.sol` smart contract. Before a borrow transaction can be executed certain requirements are verified in the code above. Including limiting what a user can borrow to 80% of the total amount they have already loaned. The amount gets transferred to the user, their contract balance is updated (and a corresponding amount from the contract balance is reduced), and the event is broadcast to the network.
 
 ```solidity
 function borrow(uint256 amount) public {
@@ -75,10 +67,19 @@ function borrow(uint256 amount) public {
     emit Borrow(msg.sender, amount);
 ```
 
-Before a borrow transaction can be executed certain requirements are verified. Including limiting what a user can borrow to 80% of the total amount they have already loaned. The amount gets transferred to the user, their contract balance is updated (and a corresponding amount from the contract balance is reduced), and the event is broadcast to the network
+If the "Compplete Borrow" button is clicked, the amount input by the user is converted to wei. Then the lend transaction from the solidity contract is saved to the variable `borrow`. Then the users debt to the treasury is saved as to the variable `borrow_balance` by calling the `borrowBalance()` solidity function and this variable is returned.
+
+```python
+    borrow_amount = amount
+    borrow_amount_wei = Web3.toWei(borrow_amount*10**18, 'wei')
+    borrow = contract.functions.borrow(borrow_amount_wei).transact({'from': w3.eth.accounts[0]})
+    borrow_balance = contract.functions.borrowBalance(user_account).call()
+    return borrow_balance
+```
+
 
 ### Repay
-Repay functionality is coded across two core files: `pylend.sol`, `lend_borrow.py`. The initial implementation is in the smart contract:
+The initial implementation is in the smart contract on the `pylend.sol` smart contract. Before a user can repay their loan, certain requirements are verified. Their borrow balance is then reduced by the amount repaid (and the contractBalance increased accordingly).
 
 ```solidity
 function repay(uint256 amount) public payable {
@@ -92,11 +93,19 @@ function repay(uint256 amount) public payable {
     //Broadcast the Repay amount
 ```
 
-Before a user can repay their loan, certain requirements are verified. Their borrow balance is then reduced by the amount repaid (and the contractBalance increased accordingly).
+If the "Complete Repay" button is clicked, the amount input by the user is converted to wei. Then the repayment transaction from the solidity contract is saved to the variable `repay`. Then the users debt to the treasury is updated by calling the `borrowBalance()` solidity function and saved as to the variable `new_borrow_balance`, which is then returned to be displayed to the user interface.
+
+```python
+    repay_amount = amount
+    repay_amount_wei = Web3.toWei(repay_amount*10**18, 'wei')
+    repay = contract.functions.repay(repay_amount_wei).transact({'value': repay_amount_wei, 'from': w3.eth.accounts[0]})
+    new_borrow_balance = contract.functions.borrowBalance(user_account).call()
+    return new_borrow_balance
+```
 
 
 ### Withdraw Balance
-Withdraw functionality is coded across two core files: `pylend.sol`, `lend_borrow.py`. The initial implementation is in the smart contract:
+The initial implementation is in the smart contract on the `pylend.sol` smart contract. Before a user can withdraw, certain requirements are verified. Then the lendBalance and contractBalance and both reduced by the amount withdrawn. The transfer to the user is executed, and the event is broadcast to the blockchain. 
 
 ```solidity
 function withdraw (uint256 amount) public{
@@ -110,10 +119,88 @@ function withdraw (uint256 amount) public{
     emit Withdraw(msg.sender, amount);
 ```
 
-Before a user can withdraw, certain requirements are verified. Then the lendBalance and contractBalance and both reduced by the amount withdrawn. The transfer to the user is executed, and the event is broadcast to the blockchain. 
+The user is able to withdraw their balance by interact with the contract over streamlit interface coded in the lend_borrw.py file. When the solidity_function is called with the withdraw parameter, the amount parameter is saved as the withdraw_amount. This amount is then converted into wei. Then the solidity contract function `withdraw` is called, passing the withdraw_amount_wei as a parameter, and executing the transaction with the web3 library. Lastly the borrowBalance is updated and saved in the withdraw_balance variable.
+
+```python
+    withdraw_amount = amount
+    withdraw_amount_wei = Web3.toWei(withdraw_amount*10**18, 'wei')
+    withdraw = contract.functions.withdraw(withdraw_amount_wei).transact({'from': w3.eth.accounts[0]})
+    withdraw_balance = contract.functions.borrowBalance(user_account).call()
+```
+
 
 ### Interest Rate Calculation
-Interest functionality is coded in `Interest_rate.py`, imported into `lend_borrow.py`, then then sent over to the `pylend.sol` smart contract.
+Interest functionality is coded in `Interest_rate.py`, imported into `lend_borrow.py`, then then sent over to the `pylend.sol` smart contract. The `Interest_rate.py` files defines three funtioons.
+
+The `utilization_rate()` function takes two parameters, the `contract_balance` and `contract_lend`. Based on these two parameters, it then calculates the utilization rate by amount lent by the contract balance. This figure is then returned for future use. Additionally it returns a boolean value called `over_borrow` that is used in the interest rate calculation.
+
+```python
+def utilization_rate(contract_balance, contract_lend):
+
+    # sets default rate if the function errors out
+    util_rate = .5
+    over_borrow = False
+
+    # tests contract balance and calculates Util rate
+
+    if contract_balance>= 0 and contract_balance>contract_lend:
+        util_rate = contract_lend/contract_balance
+    elif contract_balance >= 0 and contract_balance < contract_lend:
+        over_borrow = True
+    return over_borrow, util_rate
+```
+
+The next function defined in `Interest_rate.py` is actual interest rate calculation. First a default rate is set by multiplying the base rate by `slope1`. Then the function checks to see if the `over_borrow` status is True of False to determine the optimal interest calculation. Af the utilization rate is above or below the optimal level, different interest rates are determined. These dynamic calculations work to incentivize or disincentivize lending and borrowing accordingly.
+
+```python
+def interest_rate(util_rate ,util_optimal, base_rate, slope1, slope2, over_borrow):
+    
+    #sets default rate 
+    i_rate = base_rate + slope1
+    
+    # Test if there is an over-borrow situation
+    if over_borrow == False:
+
+        # if the utilization rate is less than the optimal rate
+        if util_rate<= util_optimal:
+            i_rate = base_rate + slope1*(util_rate/util_optimal)
+
+        # if the utilization rate is greater than the optimal rate    
+        elif util_rate >util_optimal:
+            i_rate = base_rate +slope1 +slope2*((util_rate -util_optimal)/(1-util_optimal))
+    
+    # sets the intrest if the over borrow is high
+    elif over_borrow == True:
+        i_rate = i_rate + slope1 + slope2*100
+
+    return i_rate
+```
+
+The final function then sends the interest calculated to the smart contract so the user can be credited or debited accordingly. 
+
+### Notifications
+PyBoLend allows for users to received confirmation via SMS text message after a successful lending transaction. This functionality is coded in a file called `notification_manager.py`, which uses an API provided by Twilio to send the messages. A function called `send_notification()` is coded below:
+
+```python
+def send_notification(message, user_number):
+    # saves .env variables
+    twilio_number = os.getenv("VIRTUAL_TWILIO_NUMBER")
+    twilio_sid = os.getenv("TWILIO_SID")
+    twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN")    
+
+    # initializes client object
+    client = Client(twilio_sid, twilio_auth_token)
+
+    # creates and send notification message
+    message = client.messages.create(
+        body=message,
+        from_=twilio_number,
+        to=user_number
+    )
+```
+
+This function takes a message and the user provided telephone number as parameters. After the required environment variables are then loaded and saved, the function creates an instance of the `Client()` object, and save it to the `client` variable. And in the last five lines the notification message is constructed and sent.
+
 
 ## Test Cases
 - Lending successful execution

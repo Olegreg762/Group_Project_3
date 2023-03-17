@@ -23,7 +23,7 @@ st.set_page_config(layout='wide')
 
 
 # Smart Contract connection and store in in Streamlit cache
-@st.cache(allow_output_mutation=True)
+@st.cache_resource
 def load_contract():
     ### UPDATE CONTRACT ABI INFO AFTER DEPLOYMENT ###
     with open (Path('pylend_abi.json')) as f:
@@ -42,6 +42,15 @@ def load_contract():
 
 # Initaliize contract
 contract = load_contract()
+
+
+######################################################
+######### Load and Define Twilio API variables #######
+
+# twilio_number = os.getenv("VIRTUAL_TWILIO_NUMBER")
+# user_number = os.getenv("VERIFIED_NUMBER")
+# twilio_sid = os.getenv("TWILIO_SID")
+# twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN")
 
 
 ######################################################
@@ -71,8 +80,7 @@ borrow_interest_rate = base_rate +slope1
 ######################################################
 ############ Solidity Contract Functions #############
 
-
-# Function to interact with solidity contract
+# Functio to interact with solidity contract
 def solidity_function(func, amount=None):
     user_account = w3.eth.accounts[0]
     # Function for lending
@@ -119,8 +127,7 @@ def solidity_function(func, amount=None):
 ######################################################
 ############### Main Streamlit Application ###########
 
-
-# Create title for streamlit app
+# Create Title for streamlit app
 st.markdown("<h1 style='text-align: center;'><FONT COLOR=blue><i>Py</i><FONT COLOR=green>Bo<FONT COLOR=blue>Lend</h1>",unsafe_allow_html=True)
 st.markdown("<h1 style='text-align: center;'><FONT COLOR=green>------------------------------<FONT COLOR=blue>------------------------------</h1>",unsafe_allow_html=True)
 
@@ -141,18 +148,15 @@ with functions_col:
     
     st.subheader('The :violet[Premier] ETH Lending and Borrowing Application')
 
-    # Create the tabs for streamlit
+    # Create the Tabs for streamlit
     lend_tab,borrow_tab,repay_tab,withdraw_tab,balances_tab,time_tab = st.tabs(['Lend', 'Borrow', 'Repay', 'Withdraw', 'Balances', 'Time Advance'])
 
-    # Creates Lend tab
+    # Creates Lend Tab
     with lend_tab:
 
         st.header('Lend')   
 
         lend_amount = st.number_input('Enter the amount you want to lend (in ETH):')
-
-        notification_number = st.text_input('Enter your phone number to receive confirmation via text message:')
-        
         if lend_amount != 0:
             st.write(f'{lend_interest_rate:.2}% Lending Interest' )
         else:
@@ -161,24 +165,22 @@ with functions_col:
         
         if st.button('Complete Lend',key='lend'):
 
-            # Sending loan to the TREASURY_ADDRESS
+            # sending loan to the TREASURY_ADDRESS
             solidity_function('lend', lend_amount)
 
             st.write(f'{lend_amount} has been deducted from your personal wallet.')    
             st.write(f'We owe you {lend_amount} + {lend_interest_rate}% interest.')   
+            st.write('New Balance:', solidity_function('user_balance'))
 
             # updates the balance of the TREASURY_ADDRESS
             solidity_function('treasury_address')
+            st.write(f'The new treasury balance is:' , solidity_function('treasury_balance'), 'ETH')
 
-            # Sends SMS notification 
-            if notification_number != None:
-                try:
-                    send_notification(f"Transaction confirmed. You have received your deposit of {lend_amount}ETH. The amount you may borrow has increased by {lend_amount * 0.8}ETH.", f"+1{notification_number}") 
-                except:
-                    st.write("The number you entered may not be valid, but the above information confirms your transaction.")
+            # Sends SMS notification - NOTE the line below works, but commenting out until closer to presentation to limit trial uses
+            # send_notification(f"Transaction confirmed. You have received your deposit of {lend_amount}ETH. The amount you may borrow has increased by {lend_amount * 0.8}ETH.") 
 
 
-    # Creates Borrow tab
+    # Creates Borrow Tab
     with borrow_tab:
         st.header('Borrow')
         borrow_amount = st.number_input('Enter the amount you want to borrow (in ETH):')
@@ -199,7 +201,8 @@ with functions_col:
             st.write('New Borrow Balance:', solidity_function('borrow_balance'))    
             # updates the balance of the TREASURY_ADDRESS
             solidity_function('treasury_address')
-           
+            st.write(f'The new treasury balance is:' , solidity_function('treasury_balance'), 'ETH')
+
     # Creates Repay Tab
     with repay_tab:
         st.header('Repay')
@@ -245,7 +248,6 @@ with functions_col:
             st.session_state.count += 1
 
 
-
             #calculate utlization rate
             over_borrow, util_rate = it_rate.utilization_rate(solidity_function('treasury_balance'),solidity_function('borrow_balance'))
 
@@ -256,10 +258,6 @@ with functions_col:
             #set lend interest rate
             lend_interest_rate = borrow_interest_rate/2
 
-
-
-            #calculate utlization rate
-            over_borrow, util_rate = it_rate.utilization_rate(solidity_function('treasury_balance'),solidity_function('borrow_balance'))
 
 
             borrow_interest_amount = it_rate.interest_to_pay(borrow_interest_rate, solidity_function('borrow_balance'), 0)
@@ -288,7 +286,6 @@ with treasury_col:
         #st.write(f'Average Price Change :green[{percent_change:.3f}]%')
         st.header('Liquidate Risk')
         st.write(':green[Low]')
-
 
 # Column that displays user account balance
 with account_col:
