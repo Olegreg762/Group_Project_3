@@ -72,7 +72,8 @@ borrow_interest_rate = base_rate +slope1
 ######################################################
 ############ Solidity Contract Functions #############
 
-# Functio to interact with solidity contract
+
+# Function to interact with solidity contract
 def solidity_function(func, amount=None):
     user_account = w3.eth.accounts[0]
     # Function for lending
@@ -128,7 +129,8 @@ def solidity_function(func, amount=None):
 ######################################################
 ############### Main Streamlit Application ###########
 
-# Create Title for streamlit app
+
+# Create title for streamlit app
 st.markdown("<h1 style='text-align: center;'><FONT COLOR=blue><i>Py</i><FONT COLOR=green>Bo<FONT COLOR=blue>Lend</h1>",unsafe_allow_html=True)
 st.markdown("<h1 style='text-align: center;'><FONT COLOR=green>------------------------------<FONT COLOR=blue>------------------------------</h1>",unsafe_allow_html=True)
 
@@ -149,10 +151,10 @@ with functions_col:
     
     st.subheader('The :violet[Premier] ETH Lending and Borrowing Application')
 
-    # Create the Tabs for streamlit
+    # Create the tabs for streamlit
     lend_tab,borrow_tab,repay_tab,withdraw_tab,balances_tab,time_tab = st.tabs(['Lend', 'Borrow', 'Repay', 'Withdraw', 'Balances', 'Time Advance'])
 
-    # Creates Lend Tab
+    # Creates Lend tab
     with lend_tab:
 
         st.header('Lend')   
@@ -169,16 +171,14 @@ with functions_col:
         
         if st.button('Complete Lend',key='lend'):
 
-            # sending loan to the TREASURY_ADDRESS
+            # Sending loan to the TREASURY_ADDRESS
             solidity_function('lend', lend_amount)
 
             st.write(f'{lend_amount} has been deducted from your personal wallet.')    
             st.write(f'We owe you {lend_amount} + {lend_interest_rate}% interest.')   
-            st.write('New Balance:', solidity_function('user_balance'))
 
             # updates the balance of the TREASURY_ADDRESS
             solidity_function('treasury_address')
-            st.write(f'The new treasury balance is:' , solidity_function('treasury_balance'), 'ETH')
 
             # Sends SMS notification 
             if notification_number != None:
@@ -188,7 +188,7 @@ with functions_col:
                     st.write("The number you entered may not be valid, but the above information confirms your transaction.")
 
 
-    # Creates Borrow Tab
+    # Creates Borrow tab
     with borrow_tab:
         st.header('Borrow')
         borrow_amount = st.number_input('Enter the amount you want to borrow (in ETH):')
@@ -209,8 +209,7 @@ with functions_col:
             st.write('New Borrow Balance:', solidity_function('borrow_balance'))    
             # updates the balance of the TREASURY_ADDRESS
             solidity_function('treasury_address')
-            st.write(f'The new treasury balance is:' , solidity_function('treasury_balance'), 'ETH')
-
+           
     # Creates Repay Tab
     with repay_tab:
         st.header('Repay')
@@ -256,6 +255,7 @@ with functions_col:
             st.session_state.count += 1
 
 
+
             #calculate utlization rate
             over_borrow, util_rate = it_rate.utilization_rate(solidity_function('treasury_balance'),solidity_function('borrow_balance'))
 
@@ -268,10 +268,12 @@ with functions_col:
 
 
 
+
             borrow_interest_amount = (it_rate.interest_to_pay(borrow_interest_rate, solidity_function('borrow_balance'), 0))
             
             st.write('Interest Paid to us',solidity_function('interest',borrow_interest_amount/2))
             st.write('Interest Paid to you', borrow_interest_amount/2 )
+
             
 
 
@@ -293,6 +295,7 @@ with treasury_col:
         #st.write(f'Average Price Change :green[{percent_change:.3f}]%')
         st.header('Liquidate Risk')
         st.write(':green[Low]')
+
 
 # Column that displays user account balance
 with account_col:
