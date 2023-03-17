@@ -268,10 +268,12 @@ with functions_col:
 
 
 
+
             borrow_interest_amount = (it_rate.interest_to_pay(borrow_interest_rate, solidity_function('borrow_balance'), 0))
             
             st.write('Interest Paid to us',solidity_function('interest',borrow_interest_amount/2))
             st.write('Interest Paid to you', borrow_interest_amount/2 )
+
             
 
 
