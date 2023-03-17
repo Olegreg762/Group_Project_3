@@ -203,15 +203,22 @@ This function takes a message and the user provided telephone number as paramete
 
 
 ## Test Cases
-- Lending successful execution
-- ![Lending](./Images/-.png)
-- Interest earned over time
-- ![Interest](./Images/-.png)
-- Borrowing successful exection
-- ![Borrowing](./Images/-.png)
-- Interest accrued is not eaten up by gas fees
-- ![Interest](./Images/-.png)
+In this section we provide screenshots as documentation of the successful functioning of PyBoLend.
 
+- A customer successfully executes the lending of 10 ETH:
+- ![Lending](./Images/Screenshot_LendSuccess2.png)
+
+- A different customer successfully executes a borrowing transaction of 1 ETH:
+- ![Borrowing](./Images/Screenshot_borrowSuccess.png)
+
+- Customers have the ability to check their balances:
+- ![Balances](./Images/balances.png)
+
+- The following screenshot shows the customer whose balances we just saw both earning and owing interest. Their lend and borrow balances accrue interest as we simulate the advancing of time:
+- ![Balances](./Images/interest_calculated.png)
+
+- PyBoLend is programmed with a smart contract that ensures all loans are over collateralized. A borrower is allowed to borrow up to 80% fo the ETH the have loaned. The following screenshot shows what happens when a borrow attempts to exceed this limit:
+- ![Interest](./Images/over_80_attempt.png)
 
 ## Code and Dependencies
 This code is to be run on 
