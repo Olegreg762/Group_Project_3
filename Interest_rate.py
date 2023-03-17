@@ -45,7 +45,7 @@ def interest_rate(util_rate ,util_optimal, base_rate, slope1, slope2, over_borro
 # calculats the intrest to be paid on a daily basis
 def interest_to_pay(interest_rate, borrow_amount, gas_fee_est):
 
-    interest = (1+interest_rate/365)*borrow_amount
+    interest = (interest_rate/365)*borrow_amount
 
     return interest
                                                 

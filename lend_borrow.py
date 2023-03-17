@@ -11,6 +11,7 @@ import Interest_rate as it_rate
 from notification_manager import send_notification
 
 
+
 ######################################################
 ################ Load Smart Contract #################
 
@@ -103,6 +104,15 @@ def solidity_function(func, amount=None):
         withdraw = contract.functions.withdraw(withdraw_amount_wei).transact({'from': w3.eth.accounts[0]})
         withdraw_balance = contract.functions.borrowBalance(user_account).call()
         return withdraw_balance
+    elif func == 'interest':
+        interest_amount = amount
+        interest_amount_wei = Web3.toWei(interest_amount*10**18, 'wei')
+        interest = contract.functions.contractStart().transact({'value': interest_amount_wei,'from': w3.eth.accounts[0]})
+        
+        lend = contract.functions.lend().transact({'value': interest_amount_wei,'from': w3.eth.accounts[0]})
+        lend_balance = contract.functions.lendBalance().call()
+        interest_balance = interest_amount
+        return interest_balance
     # Check user_balance
     elif func == 'user_balance':
         return w3.eth.get_balance(w3.eth.accounts[0])/10**18
@@ -258,16 +268,13 @@ with functions_col:
 
 
 
-            #calculate utlization rate
-            over_borrow, util_rate = it_rate.utilization_rate(solidity_function('treasury_balance'),solidity_function('borrow_balance'))
 
-
-            borrow_interest_amount = it_rate.interest_to_pay(borrow_interest_rate, solidity_function('borrow_balance'), 0)
+            borrow_interest_amount = (it_rate.interest_to_pay(borrow_interest_rate, solidity_function('borrow_balance'), 0))
             
+            st.write('Interest Paid to us',solidity_function('interest',borrow_interest_amount/2))
+            st.write('Interest Paid to you', borrow_interest_amount/2 )
 
-            solidity_function('lend',borrow_interest_amount/2)
-            solidity_function('repay',borrow_interest_amount/2)
-            solidity_function('borrow',borrow_interest_amount)
+            
 
 
 
