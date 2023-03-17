@@ -67,7 +67,7 @@ function borrow(uint256 amount) public {
     emit Borrow(msg.sender, amount);
 ```
 
-If the "Compplete Borrow" button is clicked, the amount input by the user is converted to wei. Then the lend transaction from the solidity contract is saved to the variable `borrow`. Then the users debt to the treasury is saved as to the variable `borrow_balance` by calling the `borrowBalance()` solidity function and this variable is returned.
+If the "Complete Borrow" button is clicked, the amount input by the user is converted to wei. Then the lend transaction from the solidity contract is saved to the variable `borrow`. Then the users debt to the treasury is saved as to the variable `borrow_balance` by calling the `borrowBalance()` solidity function and this variable is returned.
 
 ```python
     borrow_amount = amount
