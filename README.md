@@ -11,7 +11,7 @@
 1. [License](#License)
 
 ## Project Concept
-The goal of this project is to create a decentralized lending application utilizing a solidity smart contract  and a user interface coded in Python.  The core  features of the solidity smart contract are lending, borrowing, repaying debts,  and withdrawing funds. Since the smart contract is coded in solidity,  the asset being lent and borrowed is Ether from the ethereum test network.  Although the test cases compiled for this project do not involve real money,  it functions as a proof of concept  for zero custody lending application that could be deployed on the Ethereum network.
+The goal of this project is to create a decentralized lending application utilizing a Solidity smart contract and a user interface coded in Python. The core features of the Solidity smart contract are lending, borrowing, repaying debts, and withdrawing funds. Since the smart contract is coded in Solidity, the asset being lent and borrowed is Ether from the Ethereum test network. Although the test cases compiled for this project do not involve real money, it functions as a proof of concept for a zero custody lending application that could be deployed on the Ethereum network.
 
 
 [Repo Link](https://github.com/Olegreg762/Group_Project_3) <br>
@@ -205,19 +205,22 @@ This function takes a message and the user provided telephone number as paramete
 ## Test Cases
 In this section we provide screenshots as documentation of the successful functioning of PyBoLend.
 
-- A customer successfully executes the lending of 10 ETH:
+A customer successfully executes the lending of 10 ETH:
 - ![Lending](./Images/Screenshot_LendSuccess2.png)
 
-- A different customer successfully executes a borrowing transaction of 1 ETH:
+If a customer opts in, they can also receive a text that confirms their successful lending transaction.
+- ![Confirmation](./Images/Screenshot_notification.JPG){ width=200}
+
+A different customer successfully executes a borrowing transaction of 1 ETH:
 - ![Borrowing](./Images/Screenshot_borrowSuccess.png)
 
-- Customers have the ability to check their balances:
+Customers have the ability to check their balances:
 - ![Balances](./Images/balances.png)
 
-- The following screenshot shows the customer whose balances we just saw both earning and owing interest. Their lend and borrow balances accrue interest as we simulate the advancing of time:
+The following screenshot shows the customer whose balances we just saw both earning and owing interest. Their lend and borrow balances accrue interest as we simulate the advancing of time:
 - ![Balances](./Images/interest_calculated.png)
 
-- PyBoLend is programmed with a smart contract that ensures all loans are over collateralized. A borrower is allowed to borrow up to 80% fo the ETH the have loaned. The following screenshot shows what happens when a borrow attempts to exceed this limit:
+PyBoLend is programmed with a smart contract that ensures all loans are over collateralized. A borrower is allowed to borrow up to 80% fo the ETH the have loaned. The following screenshot shows what happens when a borrow attempts to exceed this limit:
 - ![Interest](./Images/over_80_attempt.png)
 
 ## Code and Dependencies
