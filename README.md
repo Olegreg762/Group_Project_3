@@ -6,6 +6,8 @@
 1. [Features](#Features)
 1. [Test Cases](#Test-Cases)
 1. [Code Dependencies](#Project-Team)
+1. [Instructions](#Instructions)
+1. [Project Team](#Project-Team)
 1. [Contribution Guidelines](#Contribution-Guidelines)
 1. [Contact](#Contact)
 1. [License](#License)
