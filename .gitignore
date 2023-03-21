@@ -3,3 +3,5 @@
 /workspace.xml
 .env
 *.pyc
+__pycache__/Interest_rate.cpython-37.pyc
+__pycache__/notification_manager.cpython-37.pyc
