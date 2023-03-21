@@ -11,12 +11,13 @@ import Interest_rate as it_rate
 from notification_manager import send_notification
 
 
+
 ######################################################
 ################ Load Smart Contract #################
 
 load_dotenv()
 
-# creates a Web3 instance of the Ganache network on local machine
+# Creates a Web3 instance of the Ganache network on local machine
 w3 = Web3(Web3.HTTPProvider('HTTP://127.0.0.1:7545'))
 
 st.set_page_config(layout='wide')
@@ -29,8 +30,7 @@ def load_contract():
     with open (Path('pylend_abi.json')) as f:
         pylend_abi = json.load(f)
     
-    #contract_address=os.getenv('') 
-    ### UPDATE CONTRACT ADDRESS AFTER DEPLOYMENT ###
+    ### Update contract address after deployment ###
     contract_address = os.getenv('SMART_CONTRACT_ADDRESS')
 
     contract = w3.eth.contract(
@@ -40,7 +40,7 @@ def load_contract():
 
     return contract
 
-# Initaliize contract
+# Initialize contract
 contract = load_contract()
 
 
@@ -62,7 +62,7 @@ slope1 = 0.02
 # Define slope 2, for intrest rate calc when util_rate > util_opt
 slope2 = 1.5
 
-# Error Flag if the Util rate is greater than 1
+# Error flag if the util rate is greater than 1
 over_borrow = False
 
 lend_interest_rate = base_rate + slope1/2
@@ -103,6 +103,17 @@ def solidity_function(func, amount=None):
         withdraw = contract.functions.withdraw(withdraw_amount_wei).transact({'from': w3.eth.accounts[0]})
         withdraw_balance = contract.functions.borrowBalance(user_account).call()
         return withdraw_balance
+    # Function that does that interest transactions
+    elif func == 'interest':
+    # Send interest to treasury balance
+        interest_amount = amount
+        interest_amount_wei = Web3.toWei(interest_amount*10**18, 'wei')
+        interest = contract.functions.contractStart().transact({'value': interest_amount_wei,'from': w3.eth.accounts[0]})
+    # Send interest to user lend balance
+        lend = contract.functions.lend().transact({'value': interest_amount_wei,'from': w3.eth.accounts[0]})
+        lend_balance = contract.functions.lendBalance().call()
+        interest_balance = interest_amount
+        return interest_balance
     # Check user_balance
     elif func == 'user_balance':
         return w3.eth.get_balance(w3.eth.accounts[0])/10**18
@@ -120,7 +131,7 @@ def solidity_function(func, amount=None):
 ############### Main Streamlit Application ###########
 
 
-# Create title for streamlit app
+# Create title for Streamlit app
 st.markdown("<h1 style='text-align: center;'><FONT COLOR=blue><i>Py</i><FONT COLOR=green>Bo<FONT COLOR=blue>Lend</h1>",unsafe_allow_html=True)
 st.markdown("<h1 style='text-align: center;'><FONT COLOR=green>------------------------------<FONT COLOR=blue>------------------------------</h1>",unsafe_allow_html=True)
 
@@ -129,19 +140,19 @@ eth_price = yf.download(tickers='ETH-USD',period='1d', interval='5m',rounding=Tr
 eth_price['Percent Change']=eth_price['Close'].pct_change()
 percent_change=eth_price['Percent Change'].mean()*100
 
-# Initialize column interface for streamlit
+# Initialize column interface for Streamlit
 treasury_col, functions_col, account_col = st.columns([1,4.75,1])
 
 ###
-## treasury_col and account_col at bottom of file so the balances updates after actions
+## treasury_col and account_col at bottom of file so the balances update after actions
 ###
 
-# Column that contains the functions to interact with smart contract
+# Column that contains the functions to interact with Smart Contract
 with functions_col:
     
     st.subheader('The :violet[Premier] ETH Lending and Borrowing Application')
 
-    # Create the tabs for streamlit
+    # Create the tabs for Streamlit
     lend_tab,borrow_tab,repay_tab,withdraw_tab,balances_tab,time_tab = st.tabs(['Lend', 'Borrow', 'Repay', 'Withdraw', 'Balances', 'Time Advance'])
 
     # Creates Lend tab
@@ -167,7 +178,7 @@ with functions_col:
             st.write(f'{lend_amount} has been deducted from your personal wallet.')    
             st.write(f'We owe you {lend_amount} + {lend_interest_rate}% interest.')   
 
-            # updates the balance of the TREASURY_ADDRESS
+            # Updates the balance of the TREASURY_ADDRESS
             solidity_function('treasury_address')
 
             # Sends SMS notification 
@@ -191,16 +202,16 @@ with functions_col:
 
         if st.button('Complete Borrow',key='borrow'):
 
-            # sending loan to the TREASURY_ADDRESS
+            # Sending loan to the TREASURY_ADDRESS
             solidity_function('borrow', borrow_amount)
-            #balance = user_balance
+            
             st.write(f'{borrow_amount} ETH has been sent to your personal wallet.')    
             st.write(f'You owe us {borrow_amount} + {(borrow_interest_rate * 2):.2}% interest.')    
             st.write('New Borrow Balance:', solidity_function('borrow_balance'))    
-            # updates the balance of the TREASURY_ADDRESS
+            # Updates the balance of the TREASURY_ADDRESS
             solidity_function('treasury_address')
            
-    # Creates Repay Tab
+    # Creates Repay tab
     with repay_tab:
         st.header('Repay')
         st.write(f'Amount Owed:', solidity_function('borrow_balance'),'ETH')
@@ -208,29 +219,29 @@ with functions_col:
         if st.button('Submit',key='repay'):
             solidity_function('repay', repay_amount)
             st.write(f'{repay_amount} has been repayed to the treasury for you debts.')    
-            #  @TODO calculate and track interest_accrued    
+               
             st.write(f'New Borrow Balance:', solidity_function('borrow_balance'), 'ETH')
     
+    # Create Withdraw tab
     with withdraw_tab:
         st.header('Withdraw')
-        st.subheader('All Borrows must be paid before withdraw.')
+        st.subheader('All Borrows must be paid before withdrawal.')
         st.write('Current Borrow Balance:', solidity_function('borrow_balance'),'ETH')
-        st.write('Current Lend Balacne:', solidity_function('lend_balance'),'ETH')
+        st.write('Current Lend Balance:', solidity_function('lend_balance'),'ETH')
         withdraw_amount = st.number_input('Amount to Withdraw')
         if st.button('Submit'):
             solidity_function('withdraw', withdraw_amount)
             st.write('New Borrow Balance:', solidity_function('borrow_balance'),'ETH')
 
-    #Creates Balances tab
+    # Creates Balances tab
     with balances_tab:
         st.header('Balances')
         if st.button('Get Balances'):
             st.write(f' Account Balance:', solidity_function('user_balance'), 'ETH')
             st.write(f'Borrow Balance:', solidity_function('borrow_balance'), 'ETH')
             st.write(f'Lend Balance:', solidity_function('lend_balance'), 'ETH')
-
-
-
+    
+    # Create Time Advance tab
     with time_tab:
         st.header('FOR TESTING ONLY')
         st.write('This tab to be REMOVED before deployment')
@@ -244,32 +255,19 @@ with functions_col:
 
             st.session_state.count += 1
 
-
-
-            #calculate utlization rate
+            #calculate utilization rate
             over_borrow, util_rate = it_rate.utilization_rate(solidity_function('treasury_balance'),solidity_function('borrow_balance'))
 
             #set borrow interest rate
             borrow_interest_rate = it_rate.interest_rate(util_rate, util_optimal, base_rate, slope1, slope2, over_borrow)
 
-
             #set lend interest rate
             lend_interest_rate = borrow_interest_rate/2
 
-
-
-            #calculate utlization rate
-            over_borrow, util_rate = it_rate.utilization_rate(solidity_function('treasury_balance'),solidity_function('borrow_balance'))
-
-
-            borrow_interest_amount = it_rate.interest_to_pay(borrow_interest_rate, solidity_function('borrow_balance'), 0)
+            borrow_interest_amount = (it_rate.interest_to_pay(borrow_interest_rate, solidity_function('borrow_balance'), 0))
             
-
-            solidity_function('lend',borrow_interest_amount/2)
-            solidity_function('repay',borrow_interest_amount/2)
-            solidity_function('borrow',borrow_interest_amount)
-
-
+            st.write('Interest Paid to us',solidity_function('interest',borrow_interest_amount/2))
+            st.write('Interest Paid to you', borrow_interest_amount/2 )
 
         st.write('Interest Time', st.session_state.count)
         st.write('Lend Intrest Rate',lend_interest_rate )
@@ -281,11 +279,9 @@ with treasury_col:
     st.write(solidity_function('treasury_balance'), 'ETH')
     # liquidate signal
     if percent_change >= 1:
-        #st.write(f'Average Price Change :red[{percent_change:.3f}]%')
         st.header('Liquidate Risk')
         st.write(':red[High]')
     elif percent_change <= 1:
-        #st.write(f'Average Price Change :green[{percent_change:.3f}]%')
         st.header('Liquidate Risk')
         st.write(':green[Low]')
 
